@@ -1,4 +1,5 @@
-<project xmlns:ivy="antlib:org.apache.ivy.ant" name="LireRequestHandler" default="go">
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="LireRequestHandler" default="go"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="antlib:org.apache.ivy.ant ">
     <description>
         This buildfile is used to build and package the LIRE RequestHandler for SOLR-4.6-SNAPSHOT.jar
     </description>
@@ -9,7 +10,7 @@
     <property name="dist" value="dist"/>
     <property name="versionstring" value="v0.1.0"/>
     <!--<property name="solrlib" value="/data/lucid/conf/solr/cores/media_4/lib/lire"/>-->
-    <property name="solrlib" value="/Users/ferdous/projects/digitalcandy/search-app/conf/solr/cores/media_7/lib/lire"/>
+    <property name="solrlib" value="/Users/ferdous/projects/digitalcandy/search-app/conf/solr/cores/visualindex_19/lib/lire"/>
     <property name="test" value="src/main/test"/>
     <!-- path to documentation like README or CHANGES -->
     <property name="doc" value="src/main/doc"/>
@@ -25,7 +26,8 @@
     <target name="download-ivy" unless="skip.download">
         <mkdir dir="${ivy.jar.dir}"/>
         <echo message="installing ivy..."/>
-        <get src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" dest="${ivy.jar.file}" usetimestamp="true"/>
+        <get src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
+             dest="${ivy.jar.file}" usetimestamp="true"/>
     </target>
 
     <path id="lib.path.id">
@@ -107,7 +109,8 @@
     </target>
 
 
-    <target name="copy_jar_to_jetty" depends="dist,clean_solr_lib" description="--> copy dist jar to solr lib path. depends on dist">
+    <target name="copy_jar_to_jetty" depends="dist,clean_solr_lib"
+            description="--> copy dist jar to solr lib path. depends on dist">
         <copydir src="${dist}/lib" dest="${solrlib}/lib"/>
         <copy file="dist/lire-request-handler.jar" todir="${solrlib}"/>
     </target>
@@ -120,8 +123,10 @@
     </target>
 
     <target name="go" depends="compile" description="--> index histograms (default task)">
-        <ivy:cachepath organisation="commons-lang" module="commons-lang" revision="2.6" pathid="lib.path.id" inline="true"/>
-        <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer" fork="true" maxmemory="2048M" error="logs/indexer_error.log" output="logs/indexer_output.log">
+        <ivy:cachepath organisation="commons-lang" module="commons-lang" revision="2.6" pathid="lib.path.id"
+                       inline="true"/>
+        <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer" fork="true"
+              maxmemory="2048M" error="logs/indexer_error.log" output="logs/indexer_output.log">
             <jvmarg line="-Xmx2048M -server"/>
             <!--<arg line="-i out.txt -n 16 -o all.xml -f"/>-->
             <arg line="-i out.txt -n 16 -f"/>
