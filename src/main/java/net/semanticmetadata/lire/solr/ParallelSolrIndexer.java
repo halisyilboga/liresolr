@@ -89,11 +89,11 @@ public class ParallelSolrIndexer implements Runnable {
 	private int maxSideLength = -1;
 
 	static {
+		classToPrefix.put(PHOG.class, "ph");
 		classToPrefix.put(ColorLayout.class, "cl");
 		classToPrefix.put(EdgeHistogram.class, "eh");
-		classToPrefix.put(PHOG.class, "ph");
-		classToPrefix.put(OpponentHistogram.class, "oh");
 		classToPrefix.put(JCD.class, "jc");
+		classToPrefix.put(OpponentHistogram.class, "oh");
 	}
 
 
@@ -287,6 +287,7 @@ public class ParallelSolrIndexer implements Runnable {
 		features.add(new ColorLayout());
 		features.add(new EdgeHistogram());
 		features.add(new JCD());
+    features.add(new OpponentHistogram());
 	}
 
 	class Monitoring implements Runnable {

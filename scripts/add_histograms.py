@@ -21,12 +21,12 @@ def save(folder_name, file_name):
         try:
             tree = ET.parse(xml_file)
             fields = tree.findall("field")
-            params = [{'id': file_name, 'title': file_name, 'url': 'http://localhost/images/' + quote_plus(file_name[:-9])}]
+            params = [{'id': file_name, 'title': file_name, 'url': getPbsUrl(quote_plus(file_name[:-9]))}]
 
             for field in fields:
               key = field.get('name')
               params[0][key] = field.text
-            url = 'http://localhost:8888/solr/Media/update/json?commit=true'
+            url = 'http://54.235.24.244:8888/solr/Media/update/json'
             data = json.dumps(params)
             print data
             req = urllib2.Request(url)
@@ -38,6 +38,15 @@ def save(folder_name, file_name):
         except Exception, ex:
             pass
 
+
+def getPbsUrl(file_name="none"):
+    if file_name.startswith("Twitter"):
+        segment = file_name.split('___')[-1]
+        url = 'https://pbs.twimg.com/media/' + segment
+        return url
+    else:
+        return 'http://54.235.24.244/images/' + file_name
+    
 
 if __name__ == "__main__":
     run()
