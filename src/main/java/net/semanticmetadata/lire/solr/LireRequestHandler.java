@@ -49,7 +49,7 @@ import org.apache.solr.core.SolrCore;
  * @author Nurul Ferdous <nurul@ferdo.us>
  * {@link net.semanticmetadata.lire.solr.LireRequestHandler} objects.
  */
-public class LireRequestHandler extends RequestHandlerBase implements SolrCoreAware {
+public class LireRequestHandler extends RequestHandlerBase {
 
     static final Logger LOG = LoggerFactory.getLogger(LireRequestHandler.class);
 
@@ -476,7 +476,7 @@ public class LireRequestHandler extends RequestHandlerBase implements SolrCoreAw
         LinkedList list = new LinkedList();
         resultScoreDocs.stream().map((result) -> {
             HashMap m = new HashMap(2);
-            m.put("d", result.getDistance());
+            m.put("d", String.format("%.2f", result.getDistance()));
             m.put("id", result.getDocument().get("id"));
             m.put("title", result.getDocument().get("title"));
             return m;
@@ -530,8 +530,4 @@ public class LireRequestHandler extends RequestHandlerBase implements SolrCoreAw
         return query;
     }
 
-    @Override
-    public void inform(SolrCore sc) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
 }
