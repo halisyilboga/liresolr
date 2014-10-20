@@ -13,3 +13,5 @@ list.txt
 liresolr.eml
 liresolr.iml
 .project
+/nbproject/private/
+/build/

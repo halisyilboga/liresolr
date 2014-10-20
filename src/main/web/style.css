@@ -52,3 +52,9 @@ h1 {
 	bottom: 3px;
 	text-align:center;
 }
+.otherLink {
+	font-family: Tahoma, Geneva, sans-serif;
+	font-size: 8pt;
+	color: #260801;
+	text-decoration: none;
+}
