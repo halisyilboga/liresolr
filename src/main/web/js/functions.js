@@ -4,7 +4,7 @@ function searchIdentity(url) {
     $('.noMatch').remove();
     $("#perfIdentity").html("Please stand by .... <img src=\"img/loader-light.gif\"/>");
     // get all the new data from the server ...
-    serverUrl = "http://localhost:8888/solr/Media/lireq?start=0&rows=20&field=cl_ha&url="+url;
+    serverUrl = "http://localhost:8888/solr/Media/lireId?id="+url;
     console.log(serverUrl);
     $.getJSON( serverUrl, function( myResult ) {
         $("#perfIdentity").html("Index search time: " + myResult.responseHeader.QTime + " ms");
