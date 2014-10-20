@@ -80,25 +80,16 @@
 
 
     <target name="compile" depends="clean, init, install-ivy"
-                description="--> compile">
+            description="--> compile">
         <propertyfile file="${config}/build.properties"
-                              comment="Properties of this specific CALIPH build">
+                      comment="Properties of this specific CALIPH build">
             <entry key="build-date" type="date" value="now" />
             <entry key="build-number" type="int" value="1" operation="+" />
         </propertyfile>
         <property file="${config}/build.properties" />
-        <echo file="default.mf">Build-Date:
-            ${touch.time}${line.separator}Build-Number:
-            ${build-number}${line.separator}Class-Path: lib/commons-codec-1.8.jar
-            lib/commons-math3-3.2.jar lib/JOpenSurf.jar lib/lire.jar
-            lib/lucene-analyzers-common-4.6-SNAPSHOT.jar
-            lib/lucene-core-4.6-SNAPSHOT.jar lib/lucene-queries-4.6-SNAPSHOT.jar
-            lib/lucene-queryparser-4.6-SNAPSHOT.jar
-            lib/solr-core-4.6-SNAPSHOT.jar
-            lib/solr-solrj-4.6-SNAPSHOT.jar${line.separator}Main-Class:
-            net.semanticmetadata.lire.solr.ParallelSolrIndexer${line.separator}</echo>
+        <echo file="default.mf">Build-Date: ${touch.time}${line.separator}Build-Number: ${build-number}${line.separator}Class-Path: lib/commons-codec-1.8.jar lib/commons-math3-3.2.jar lib/JOpenSurf.jar lib/lire.jar lib/lucene-analyzers-common-4.6-SNAPSHOT.jar lib/lucene-core-4.6-SNAPSHOT.jar lib/lucene-queries-4.6-SNAPSHOT.jar lib/lucene-queryparser-4.6-SNAPSHOT.jar lib/solr-core-4.6-SNAPSHOT.jar lib/solr-solrj-4.6-SNAPSHOT.jar${line.separator}Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer${line.separator}</echo>        
         <javac srcdir="${src}" destdir="${build}" debug="true"
-                       debuglevel="lines,vars,source" includeantruntime="false">
+               debuglevel="lines,vars,source" includeantruntime="false">
             <classpath refid="classpath.path" />
         </javac>
         <copy todir="${build}">
@@ -115,7 +106,7 @@
     </target>
 
     <target name="dist" depends="compile"
-                description="--> distribute jar. depends on compile">
+            description="--> distribute jar. depends on compile">
         <mkdir dir="${dist}" />
         <mkdir dir="${dist}/lib" />
 
@@ -131,7 +122,7 @@
 
         <unjar src="lib/lire.jar" dest="${build}" />
         <jar jarfile="${dist}/lire-request-handler.jar" manifest="default.mf"
-                     basedir="${build}">
+             basedir="${build}">
             <exclude name="**/apache/**" />
         </jar>
     </target>
@@ -143,145 +134,38 @@
 
 
     <target name="copy_jar_to_jetty" depends="dist,clean_solr_lib"
-                description="--> copy dist jar to solr lib path. depends on dist">
+            description="--> copy dist jar to solr lib path. depends on dist">
         <copydir src="${dist}/lib" dest="${solrlib}/lib" />
         <copy file="dist/lire-request-handler.jar" todir="${solrlib}" />
     </target>
 
     <target name="install-ivy" depends="download-ivy" description="--> install ivy">
         <path id="ivy.lib.path">
-            <pathelement location="${ivy.jar.file}" />
+            <pathelement location="${ivy.jar.file}"/>
         </path>
-        <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant"
-                         classpathref="ivy.lib.path" />
+        <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
     </target>
 
-    <target name="ivy-configure">
-        <!-- [DW] ivy loses its configuration for some reason. cannot explain this. if
-        you have an idea, fix it.
-        unless="ivy.settings.uptodate" -->
-        <!-- override: just for safety, should be unnecessary -->
-        <ivy:configure file="${common.dir}/ivy-settings.xml" override="true"/>
-        <!-- <property name="ivy.settings.uptodate" value="true"/> -->
-    </target>
-
-    <target name="resolve" depends="ivy-availability-check,ivy-configure">
-        <!-- todo, make this a property or something. 
-        only special cases need bundles -->
-        <ivy:retrieve type="jar,bundle,test,test-jar,tests" log="download-only"
-                          conf="${ivy.default.configuration}" sync="${ivy.sync}"/>
-    </target>
-
-    <property name="ivy_install_path" location="${user.home}/.ant/lib" />
-    <property name="ivy_bootstrap_url1" value="http://repo1.maven.org/maven2"/>
-    <!-- you might need to tweak this from china so it works -->
-    <property name="ivy_bootstrap_url2" value="http://uk.maven.org/maven2"/>
-    <property name="ivy_checksum_sha1" value="c5ebf1c253ad4959a29f4acfe696ee48cdd9f473"/>
-
-    <target name="ivy-availability-check" unless="ivy.available">
-        <condition property="ivy.available">
-            <typefound uri="antlib:org.apache.ivy.ant" name="configure" />
-        </condition>
-        <antcall target="ivy-fail" />
-    </target>
-
-    <target name="ivy-fail" unless="ivy.available">
-        <echo>
-            This build requires Ivy and Ivy could not be found in your ant classpath.
-
-            (Due to classpath issues and the recursive nature of the Lucene/Solr 
-            build system, a local copy of Ivy can not be used an loaded dynamically 
-            by the build.xml)
-
-            You can either manually install a copy of Ivy ${ivy.bootstrap.version} in your ant classpath:
-            http://ant.apache.org/manual/install.html#optionalTasks
-
-            Or this build file can do it for you by running the Ivy Bootstrap target:
-            ant ivy-bootstrap     
-	     
-            Either way you will only have to install Ivy one time.
-
-            'ant ivy-bootstrap' will install a copy of Ivy into your Ant User Library:
-            ${user.home}/.ant/lib
-	     
-            If you would prefer, you can have it installed into an alternative 
-            directory using the "-Divy_install_path=/some/path/you/choose" option, 
-            but you will have to specify this path every time you build Lucene/Solr 
-            in the future...
-            ant ivy-bootstrap -Divy_install_path=/some/path/you/choose
-            ...
-            ant -lib /some/path/you/choose clean compile
-            ...
-            ant -lib /some/path/you/choose clean compile
-
-            If you have already run ivy-bootstrap, and still get this message, please 
-            try using the "--noconfig" option when running ant, or editing your global
-            ant config to allow the user lib to be loaded.  See the wiki for more details:
-            http://wiki.apache.org/lucene-java/HowToContribute#antivy
-        </echo>
-        <fail>Ivy is not available</fail>
-    </target>
-
-    <target name="ivy-bootstrap" description="Download and install Ivy in the users ant lib dir" depends="ivy-bootstrap1,ivy-bootstrap2,ivy-checksum"/>
-
-    <!-- try to download from repo1.maven.org -->
-    <target name="ivy-bootstrap1">
-        <ivy-download src="${ivy_bootstrap_url1}" dest="${ivy_install_path}"/>
-        <available file="${ivy_install_path}/ivy-${ivy.bootstrap.version}.jar" property="ivy.bootstrap1.success" />
-    </target> 
-
-    <target name="ivy-bootstrap2" unless="ivy.bootstrap1.success">
-        <ivy-download src="${ivy_bootstrap_url2}" dest="${ivy_install_path}"/>
-    </target>
-
-    <target name="ivy-checksum">
-        <checksum file="${ivy_install_path}/ivy-${ivy.bootstrap.version}.jar"
-                      property="${ivy_checksum_sha1}"
-                      algorithm="SHA"
-                      verifyproperty="ivy.checksum.success"/>
-        <fail message="Checksum mismatch for ivy-${ivy.bootstrap.version}.jar. Please download this file manually">
-            <condition>
-                <isfalse value="${ivy.checksum.success}"/>
-            </condition>
-        </fail>
-    </target>
-	   
-    <macrodef name="ivy-download">
-        <attribute name="src"/>
-        <attribute name="dest"/>
-        <sequential>
-            <mkdir dir="@{dest}"/>
-            <echo message="installing ivy ${ivy.bootstrap.version} to ${ivy_install_path}"/>
-            <get src="@{src}/org/apache/ivy/ivy/${ivy.bootstrap.version}/ivy-${ivy.bootstrap.version}.jar"
-                   dest="@{dest}/ivy-${ivy.bootstrap.version}.jar" usetimestamp="true" ignoreerrors="true"/>
-        </sequential>
-    </macrodef>
-	
     <target name="go" depends="compile" description="--> index histograms (default task)">
-        <ivy:cachepath organisation="commons-lang" module="commons-lang"
-                               revision="2.6" pathid="lib.path.id" inline="true" />
-		
-		
-
-        <java classpathref="classpath.path"
-                      classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer" fork="true"
-                      maxmemory="2048M" error="logs/indexer_error.log" output="logs/indexer_output.log">
-            <jvmarg line="-Xmx2048M -server" />
-            <!--<arg line="-i out.txt -n 16 -o all.xml -f"/> -->
-            <arg line="-i out.txt -n 16 -f" />
+        <ivy:cachepath organisation="commons-lang" module="commons-lang" revision="2.6" pathid="lib.path.id" inline="true"/>
+        <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer" fork="true"
+              maxmemory="2048M" error="logs/indexer_error.log" output="logs/indexer_output.log">
+            <jvmarg line="-Xmx2048M -server"/>
+            <!--<arg line="-i out.txt -n 16 -o all.xml -f"/>-->
+            <arg line="-i out.txt -n 16 -f"/>
 
         </java>
     </target>
 
     <target name="clean" description="--> clean the project">
-        <delete dir="${build}" includeemptydirs="true" quiet="true" />
-        <delete dir="${dist}" includeemptydirs="true" quiet="true" />
+        <delete dir="${build}" includeemptydirs="true" quiet="true"/>
+        <delete dir="${dist}" includeemptydirs="true" quiet="true"/>
     </target>
     <target name="clean-ivy" description="--> clean the ivy installation">
-        <delete dir="${ivy.jar.dir}" />
+        <delete dir="${ivy.jar.dir}"/>
     </target>
     <target name="clean-cache" depends="install-ivy" description="--> clean the ivy cache">
-        <ivy:cleancache />
+        <ivy:cleancache/>
     </target>
 
 </project>

@@ -31,7 +31,12 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.TreeSet;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.solr.core.SolrCore;
 
@@ -46,14 +51,13 @@ import org.apache.solr.core.SolrCore;
  */
 public class LireRequestHandler extends RequestHandlerBase implements SolrCoreAware {
 
-    private static final Logger LOG = LoggerFactory.getLogger(LireRequestHandler.class);
+    static final Logger LOG = LoggerFactory.getLogger(LireRequestHandler.class);
 
     private static final HashMap<String, Class> fieldToClass = new HashMap<>(5);
-    private long time = 0;
-    private final int countRequests = 0;
-    private final int defaultNumberOfResults = 60;
-    private final int defaultStartValue = 0;
-    private final String defaultAlgorithmField = "cl_ha";
+    static long time = 0;
+    static int defaultNumberOfResults = 60;
+    static int defaultStartValue = 0;
+    static final String defaultAlgorithmField = "cl_ha";
     volatile long numErrors;
     volatile long numRequests;
     volatile long totalTime;
