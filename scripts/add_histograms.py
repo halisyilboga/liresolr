@@ -9,7 +9,7 @@ import urllib2
 import xml.etree.ElementTree as ET
 from urllib import quote_plus
 
-HOSTNAME = '54.235.24.244'
+HOSTNAME = 'localhost'
 
 def run(folder_name="/data/digitalcandy/ml/images/"):
     for file_name in os.listdir(folder_name):
