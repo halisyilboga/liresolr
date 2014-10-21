@@ -22,7 +22,6 @@ import org.apache.solr.handler.RequestHandlerBase;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.SolrQueryResponse;
 import org.apache.solr.search.SolrIndexSearcher;
-import org.apache.solr.util.plugin.SolrCoreAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,11 +33,11 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
 import org.apache.lucene.search.ScoreDoc;
-import org.apache.solr.core.SolrCore;
 
 /**
  * This is the main LIRE RequestHandler for the Solr Plugin. It supports query
@@ -474,18 +473,16 @@ public class LireRequestHandler extends RequestHandlerBase {
         time = System.currentTimeMillis() - time;
         rsp.add("ReRankSearchTime", time + "");
         LinkedList list = new LinkedList();
-        resultScoreDocs.stream().map((result) -> {
-            HashMap m = new HashMap(2);
-            m.put("d", String.format("%.2f", result.getDistance()));
-            m.put("id", result.getDocument().get("id"));
-            m.put("title", result.getDocument().get("title"));
-            return m;
-        }).forEach((m) -> {
-            //            m.put(field, result.getDocument().get(field));
-//            m.put(field.replace("_ha", "_hi"), result.getDocument().getBinaryValue(field));
-            list.add(m);
-        });
+        for (Iterator<SimpleResult> it = resultScoreDocs.iterator(); it.hasNext();) {
+            SimpleResult result = it.next();
+            HashMap map = new HashMap(2);
+            map.put("d", String.format("%.2f", result.getDistance()));
+            map.put("id", result.getDocument().get("id"));
+            map.put("title", result.getDocument().get("title"));
+            list.add(map);
+        }
         rsp.add("docs", list.subList(paramStarts, maximumHits));
+        //res.add("params", req.getParams().toNamedList());
     }
 
     @Override
@@ -506,8 +503,8 @@ public class LireRequestHandler extends RequestHandlerBase {
     @Override
     public NamedList<Object> getStatistics() {
         NamedList<Object> statistics = super.getStatistics();
-        statistics.add("Number of Requests", numRequests);
-        statistics.add("Number of Errors", numErrors);
+        statistics.add("requests", numRequests);
+        statistics.add("errors", numErrors);
         statistics.add("totalTime(ms)", "" + totalTime);
         return statistics;
     }

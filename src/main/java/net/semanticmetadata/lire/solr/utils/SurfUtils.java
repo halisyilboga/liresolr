@@ -9,7 +9,13 @@ public class SurfUtils {
     public static float getDistance(List<SurfInterestPoint> points1, List<SurfInterestPoint> points2) {
         int numberOfPoints = 0;
 
-        numberOfPoints = points1.stream().map((a) -> findSmallestDistance(a, points2)).filter((smallestDistance) -> (smallestDistance < 0.15d)).map((_item) -> 1).reduce(numberOfPoints, Integer::sum);
+        for (SurfInterestPoint a : points1) {
+            double smallestDistance = findSmallestDistance(a, points2);
+
+            if (smallestDistance < 0.15d) {
+                ++numberOfPoints;
+            }
+        }
         if (numberOfPoints == 0) {
             return (float) 1.0;
         }

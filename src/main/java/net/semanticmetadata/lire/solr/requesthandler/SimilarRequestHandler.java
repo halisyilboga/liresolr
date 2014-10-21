@@ -187,9 +187,9 @@ public class SimilarRequestHandler extends RequestHandlerBase {
         TreeSet<SimpleResult> resultScoreDocs = new TreeSet<>();
 
         // Re-rank color layout
-        clScoreDocs.stream().forEach((r) -> {
+        for (SimpleResult r : clScoreDocs) {
             rerank(suPoints, r.getDocument(), r.getIndexNumber(), resultScoreDocs, numSimImages);
-        });
+        }
 
         // Re-rank surf (visual words)
         for (ScoreDoc scoreDoc : suDocs.scoreDocs) {
@@ -201,15 +201,13 @@ public class SimilarRequestHandler extends RequestHandlerBase {
         res.add("ReRankSearchTime", time + "");
 
         LinkedList<HashMap<String, String>> result = new LinkedList<>();
-        resultScoreDocs.stream().map((r) -> {
+        for (SimpleResult r : resultScoreDocs) {
             HashMap<String, String> map = new HashMap<>(2);
             map.put("id", r.getDocument().get("id"));
             map.put("title", r.getDocument().get("title"));
             map.put("d", String.format("%.2f", r.getDistance()));
-            return map;
-        }).forEach((map) -> {
             result.add(map);
-        });
+        }
         res.add("docs", result);
         res.add("params", req.getParams().toNamedList());
     }
