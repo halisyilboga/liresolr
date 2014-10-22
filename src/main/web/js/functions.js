@@ -35,9 +35,9 @@ function searchSimiliar(url) {
         
         var last = $("#similiar");
         for (var i =0; i< myResult.docs.length; i++) {
-            myID = myResult.docs[i].id.toString();
-            console.log(myID);
-            recent = $( "<div class=\"imgCont\"><img class=\"lireimg\" src=\"http://localhost/images/"+myID.split('/')[5]+"\" />"
+            var fileName = myResult.docs[i].title.toString();
+            console.log(fileName);
+            recent = $( "<div class=\"imgCont\"><img class=\"lireimg\" src=\"http://localhost/images/" + fileName + "\" />"
                 + "d="+myResult.docs[i].d+"<br/>");
             recent.insertAfter(last);
             last=recent;

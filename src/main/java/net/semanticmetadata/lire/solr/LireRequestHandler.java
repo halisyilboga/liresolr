@@ -50,7 +50,7 @@ import org.apache.lucene.search.ScoreDoc;
  */
 public class LireRequestHandler extends RequestHandlerBase {
 
-    static final Logger LOG = LoggerFactory.getLogger(LireRequestHandler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LireRequestHandler.class);
 
     private static final HashMap<String, Class> fieldToClass = new HashMap<>(5);
     static long time = 0;
@@ -505,7 +505,7 @@ public class LireRequestHandler extends RequestHandlerBase {
         NamedList<Object> statistics = super.getStatistics();
         statistics.add("requests", numRequests);
         statistics.add("errors", numErrors);
-        statistics.add("totalTime(ms)", "" + totalTime);
+        statistics.add("totalTime", "" + totalTime);
         return statistics;
     }
 

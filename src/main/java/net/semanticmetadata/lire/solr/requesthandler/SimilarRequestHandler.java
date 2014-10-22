@@ -41,9 +41,9 @@ public class SimilarRequestHandler extends RequestHandlerBase {
     @Override
     public NamedList<Object> getStatistics() {
         NamedList<Object> statistics = super.getStatistics();
-        statistics.add("Number of Requests", numRequests);
-        statistics.add("Number of Errors", numErrors);
-        statistics.add("totalTime(ms)", "" + totalTime);
+        statistics.add("requests", numRequests);
+        statistics.add("errors", numErrors);
+        statistics.add("totalTime", "" + totalTime);
         return statistics;
     }
 
