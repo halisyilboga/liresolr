@@ -39,7 +39,7 @@
 package net.semanticmetadata.lire.solr;
 
 import net.semanticmetadata.lire.imageanalysis.*;
-import net.semanticmetadata.lire.imageanalysis.SurfSolrFeature;
+import net.semanticmetadata.lire.imageanalysis.SurfFeature;
 import net.semanticmetadata.lire.indexing.hashing.BitSampling;
 import net.semanticmetadata.lire.indexing.parallel.WorkItem;
 import net.semanticmetadata.lire.utils.ImageUtils;
@@ -50,8 +50,6 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.URLEncoder;
 import java.util.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This indexing application allows for parallel extraction of global features
@@ -85,7 +83,7 @@ import org.slf4j.LoggerFactory;
  */
 public class ParallelSolrIndexer implements Runnable {
 
-    private static final Logger log = LoggerFactory.getLogger(ParallelSolrIndexer.class);
+    //private static final Logger log = LoggerFactory.getLogger(ParallelSolrIndexer.class);
 
     private static final HashMap<Class, String> classToPrefix = new HashMap<Class, String>(5);
     private static boolean force = false;
@@ -107,7 +105,7 @@ public class ParallelSolrIndexer implements Runnable {
         classToPrefix.put(EdgeHistogram.class, "eh");
         classToPrefix.put(JCD.class, "jc");
         classToPrefix.put(OpponentHistogram.class, "oh");
-        classToPrefix.put(SurfSolrFeature.class, "su");
+        classToPrefix.put(SurfFeature.class, "su");
     }
 
     public ParallelSolrIndexer() {
@@ -169,7 +167,7 @@ public class ParallelSolrIndexer implements Runnable {
                     try {
                         ParallelSolrIndexer.numberOfThreads = Integer.parseInt(args[i + 1]);
                     } catch (Exception ex) {
-                        log.info("Could not set number of threads to \"" + args[i + 1] + "\"." + ex.getMessage());
+                        //log.info("Could not set number of threads to \"" + args[i + 1] + "\"." + ex.getMessage());
                     }
                 } else {
                     printHelp();
@@ -185,7 +183,7 @@ public class ParallelSolrIndexer implements Runnable {
     }
 
     private static void printHelp() {
-        log.info("Help for the ParallelSolrIndexer class.\n"
+        System.out.print("Help for the ParallelSolrIndexer class.\n"
                 + "=============================\n"
                 + "This help text is shown if you start the ParallelSolrIndexer with the '-h' option.\n"
                 + "\n"
@@ -259,7 +257,7 @@ public class ParallelSolrIndexer implements Runnable {
 //                configured = false;
 //            }
         } else if (outFile.exists() && !force) {
-            log.info(outFile.getName() + " already exists. Please delete or choose another outfile.");
+            //log.info(outFile.getName() + " already exists. Please delete or choose another outfile.");
             configured = false;
         }
         return configured;
@@ -269,7 +267,7 @@ public class ParallelSolrIndexer implements Runnable {
     public void run() {
         // check:
         if (fileList == null || !fileList.exists()) {
-            log.info("No text file with a list of images given.");
+            //log.info("No text file with a list of images given.");
             return;
         }
         try {
@@ -292,7 +290,7 @@ public class ParallelSolrIndexer implements Runnable {
                 iterator.next().join();
             }
             long l1 = System.currentTimeMillis() - l;
-            log.info("Analyzed " + overallCount + " images in " + l1 / 1000 + " seconds, ~" + (overallCount > 0 ? (l1 / overallCount) : "inf.") + " ms each.");
+            //log.info("Analyzed " + overallCount + " images in " + l1 / 1000 + " seconds, ~" + (overallCount > 0 ? (l1 / overallCount) : "inf.") + " ms each.");
             if (!individualFiles) {
                 dos.write("</add>\n".getBytes());
                 dos.close();
@@ -302,7 +300,7 @@ public class ParallelSolrIndexer implements Runnable {
 //            threadFinished = true;
 
         } catch (IOException | InterruptedException ex) {
-            log.error(ex.getMessage());
+            //log.error(ex.getMessage());
         }
 
     }
@@ -313,7 +311,7 @@ public class ParallelSolrIndexer implements Runnable {
         features.add(new EdgeHistogram());
         features.add(new JCD());
         features.add(new OpponentHistogram());
-        features.add(new SurfSolrFeature());
+        features.add(new SurfFeature());
     }
 
     class Monitoring implements Runnable {
@@ -329,7 +327,7 @@ public class ParallelSolrIndexer implements Runnable {
                 try {
                     // print the current status:
                     long time = System.currentTimeMillis() - ms;
-                    log.info("Analyzed " + overallCount + " images in " + time / 1000 + " seconds, " + ((overallCount > 0) ? (time / overallCount) : "n.a.") + " ms each (" + images.size() + " images currently in queue).");
+                    //log.info("Analyzed " + overallCount + " images in " + time / 1000 + " seconds, " + ((overallCount > 0) ? (time / overallCount) : "n.a.") + " ms each (" + images.size() + " images currently in queue).");
                     Thread.sleep(1000 * monitoringInterval); // wait xx seconds
                 } catch (InterruptedException e) {
 
@@ -367,7 +365,7 @@ public class ParallelSolrIndexer implements Runnable {
                             images.notify();
                         }
                     } catch (IOException | InterruptedException e) {
-                        log.info("Could not read image " + file + ": " + e.getMessage());
+                        //log.info("Could not read image " + file + ": " + e.getMessage());
                     }
                     try {
                         if (tmpSize > 500) {
@@ -442,6 +440,7 @@ public class ParallelSolrIndexer implements Runnable {
                             img = ImageUtils.scaleImage(img, ((int) (scaleFactor * img.getWidth())), (int) (scaleFactor * img.getHeight()));
                         }
                         byte[] tmpBytes = tmp.getFileName().getBytes();
+                        sb.append("<add>");
                         sb.append("<doc>");
                         sb.append("<field name=\"id\">");
                         sb.append(tmp.getFileName());
@@ -464,7 +463,8 @@ public class ParallelSolrIndexer implements Runnable {
                                 sb.append("</field>");
                             }
                         }
-                        sb.append("</doc>\n");
+                        sb.append("</doc>");
+                        sb.append("</add>\n");
                         // finally write everything to the stream - in case no exception was thrown..
                         if (!individualFiles) {
                             synchronized (dos) {
@@ -479,7 +479,7 @@ public class ParallelSolrIndexer implements Runnable {
                         }
                     }
                 } catch (Exception ex) {
-                    log.info("Error processing file " + tmp.getFileName() + ". Exceptin message was: " + ex.getMessage());
+                    //log.info("Error processing file " + tmp.getFileName() + ". Exceptin message was: " + ex.getMessage());
                 }
             }
         }

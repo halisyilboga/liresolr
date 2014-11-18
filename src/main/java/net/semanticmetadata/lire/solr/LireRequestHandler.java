@@ -22,8 +22,6 @@ import org.apache.solr.handler.RequestHandlerBase;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.SolrQueryResponse;
 import org.apache.solr.search.SolrIndexSearcher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 
@@ -49,8 +47,6 @@ import org.apache.lucene.search.ScoreDoc;
  * {@link net.semanticmetadata.lire.solr.LireRequestHandler} objects.
  */
 public class LireRequestHandler extends RequestHandlerBase {
-
-    private static final Logger LOG = LoggerFactory.getLogger(LireRequestHandler.class);
 
     private static final HashMap<String, Class> fieldToClass = new HashMap<>(5);
     static long time = 0;
@@ -78,7 +74,7 @@ public class LireRequestHandler extends RequestHandlerBase {
         try {
             BitSampling.readHashFunctions();
         } catch (IOException ioe) {
-            LOG.error(ioe.getMessage());
+            //LOG.error(ioe.getMessage());
         }
     }
 
@@ -131,7 +127,7 @@ public class LireRequestHandler extends RequestHandlerBase {
             }
         } catch (IOException | IllegalAccessException | InstantiationException e) {
             numErrors++;
-            LOG.error(e.getMessage());
+            //LOG.error(e.getMessage());
         } finally {
             totalTime += System.currentTimeMillis() - startTime;
         }
@@ -163,14 +159,14 @@ public class LireRequestHandler extends RequestHandlerBase {
                 // Using DocValues to get the actual data from the index.
                 BinaryDocValues binaryValues = MultiDocValues.getBinaryValues(searcher.getIndexReader(), paramField.replace("_ha", "_hi")); // ***  #
                 if (binaryValues == null) {
-                    LOG.info("Could not find the DocValues of the query document. Are they in the index?");
+                    //LOG.info("Could not find the DocValues of the query document. Are they in the index?");
                     return;
                 }
                 BytesRef bytesRef = new BytesRef();
                 binaryValues.get(hits.scoreDocs[0].doc, bytesRef);
 //                Document d = searcher.getIndexReader().document(hits.scoreDocs[0].doc);
                 String histogramFieldName = paramField.replace("_ha", "_hi");
-                LOG.info(histogramFieldName);
+                //LOG.info(histogramFieldName);
 
                 queryFeature.setByteArrayRepresentation(bytesRef.bytes, bytesRef.offset, bytesRef.length);
 
@@ -393,17 +389,17 @@ public class LireRequestHandler extends RequestHandlerBase {
         }
 
         // create boolean query:
-        LOG.info("** Creating query.");
+        //LOG.info("** Creating query.");
         BooleanQuery query = new BooleanQuery();
         for (int i = 0; i < hashes.length; i++) {
             // be aware that the hashFunctionsFileName of the field must match the one you put the hashes in before.
             hashes[i] = hashes[i].trim();
             if (hashes[i].length() > 0) {
                 query.add(new BooleanClause(new TermQuery(new Term(paramField, hashes[i].trim())), BooleanClause.Occur.SHOULD));
-                LOG.info("** " + paramField + ": " + hashes[i].trim());
+                //LOG.info("** " + paramField + ": " + hashes[i].trim());
             }
         }
-        LOG.info("** Doing search.");
+        //LOG.info("** Doing search.");
 
         // query feature
         LireFeature queryFeature = (LireFeature) fieldToClass.get(paramField).newInstance();
@@ -469,7 +465,7 @@ public class LireRequestHandler extends RequestHandlerBase {
                 maxDistance = resultScoreDocs.last().getDistance();
             }
         }
-        LOG.info("** Creating response.");
+        //LOG.info("** Creating response.");
         time = System.currentTimeMillis() - time;
         rsp.add("ReRankSearchTime", time + "");
         LinkedList list = new LinkedList();
