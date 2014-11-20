@@ -125,7 +125,7 @@ public class SimilarRequestHandler extends RequestHandlerBase {
         for (IndexableField queryField : queryFields) {
             SurfFeature feature = new SurfFeature();
             feature.setByteArrayRepresentation(queryField.binaryValue().bytes, queryField.binaryValue().offset, queryField.binaryValue().length);
-            SurfInterestPoint sip = new SurfInterestPoint(feature.descriptor);
+            SurfInterestPoint sip = new SurfInterestPoint(feature.getDoubleHistogram());
             suPoints.add(sip);
         }
         // sort for faster compare
@@ -222,7 +222,7 @@ public class SimilarRequestHandler extends RequestHandlerBase {
         for (IndexableField docField : docFields) {
             SurfFeature feature = new SurfFeature();
             feature.setByteArrayRepresentation(docField.binaryValue().bytes, docField.binaryValue().offset, docField.binaryValue().length);
-            SurfInterestPoint sip = new SurfInterestPoint(feature.descriptor);
+            SurfInterestPoint sip = new SurfInterestPoint(feature.getDoubleHistogram());
             docPoints.add(sip);
         }
 

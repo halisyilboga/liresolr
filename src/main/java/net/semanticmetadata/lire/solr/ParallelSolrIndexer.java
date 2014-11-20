@@ -39,7 +39,6 @@
 package net.semanticmetadata.lire.solr;
 
 import net.semanticmetadata.lire.imageanalysis.*;
-import net.semanticmetadata.lire.imageanalysis.SurfFeature;
 import net.semanticmetadata.lire.indexing.hashing.BitSampling;
 import net.semanticmetadata.lire.indexing.parallel.WorkItem;
 import net.semanticmetadata.lire.utils.ImageUtils;
@@ -100,12 +99,12 @@ public class ParallelSolrIndexer implements Runnable {
     private int maxSideLength = -1;
 
     static {
-        classToPrefix.put(PHOG.class, "ph");
         classToPrefix.put(ColorLayout.class, "cl");
         classToPrefix.put(EdgeHistogram.class, "eh");
-        classToPrefix.put(JCD.class, "jc");
         classToPrefix.put(OpponentHistogram.class, "oh");
-        classToPrefix.put(SurfFeature.class, "su");
+        classToPrefix.put(PHOG.class, "ph");
+        classToPrefix.put(JCD.class, "jc");
+        classToPrefix.put(SurfSolrFeature.class, "su");
     }
 
     public ParallelSolrIndexer() {
@@ -306,12 +305,12 @@ public class ParallelSolrIndexer implements Runnable {
     }
 
     private void addFeatures(List features) {
-        features.add(new PHOG());
         features.add(new ColorLayout());
         features.add(new EdgeHistogram());
-        features.add(new JCD());
         features.add(new OpponentHistogram());
-        features.add(new SurfFeature());
+        features.add(new PHOG());
+        features.add(new JCD());
+        features.add(new SurfSolrFeature());
     }
 
     class Monitoring implements Runnable {
@@ -445,6 +444,14 @@ public class ParallelSolrIndexer implements Runnable {
                         sb.append("<field name=\"id\">");
                         sb.append(tmp.getFileName());
                         sb.append("</field>");
+
+                        sb.append("<field name=\"width\">");
+                        sb.append(img.getWidth());
+                        sb.append("</field>");
+                        sb.append("<field name=\"height\">");
+                        sb.append(img.getHeight());
+                        sb.append("</field>");
+
                         sb.append("<field name=\"title\">");
                         sb.append(URLEncoder.encode(new File(tmp.getFileName()).getName(), "utf-8"));
                         sb.append("</field>");

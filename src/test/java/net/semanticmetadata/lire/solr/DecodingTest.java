@@ -10,12 +10,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class DecodingTest extends TestCase {
-
-    private static final Logger log = LoggerFactory.getLogger(DecodingTest.class);
 
     public void testDecoding() throws IOException {
         String hist;
@@ -23,13 +19,11 @@ public class DecodingTest extends TestCase {
         byte[] bytes = Base64.decodeBase64(hist);
         PHOG p = new PHOG();
         p.setByteArrayRepresentation(bytes);
-        log.info(Arrays.toString(p.getDoubleHistogram()));
 
         BufferedImage img = ImageIO.read(new File("munch.jpg"));
 //        BufferedImage img = ImageIO.read(new File("test.jpg"));
         PHOG g = new PHOG();
         g.extract(img);
-        log.info("DISTANCE IS: " + g.getDistance(p));
     }
 
     public void testJcdDecoding() {
