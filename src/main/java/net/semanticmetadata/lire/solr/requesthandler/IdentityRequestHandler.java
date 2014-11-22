@@ -119,7 +119,7 @@ public class IdentityRequestHandler extends RequestHandlerBase {
         BytesRef bytesRef = new BytesRef();
         for (ScoreDoc scoreDoc : docs.scoreDocs) {
             // using DocValues to retrieve the field values ...
-            binaryValues.get(scoreDoc.doc, bytesRef);
+            binaryValues.get(scoreDoc.doc);
             // Create feature
             ColorLayout tmpFeauture = new ColorLayout();
             tmpFeauture.setByteArrayRepresentation(bytesRef.bytes, bytesRef.offset, bytesRef.length);

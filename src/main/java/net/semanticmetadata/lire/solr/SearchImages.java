@@ -13,7 +13,7 @@ import java.util.ArrayList;
 
 public class SearchImages {
 
-    private static String baseURL = "http://localhost:8888/solr/Media/get";
+    private static String baseURL = "http://localhost:8983/solr/Media/get";
 
     public static void main(String[] args) {
         try {

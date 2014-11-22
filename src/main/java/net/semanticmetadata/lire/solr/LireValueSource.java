@@ -76,14 +76,14 @@ public class LireValueSource extends ValueSource {
 
 				@Override
 				public boolean bytesVal(int doc, BytesRef target) {
-					binaryValues.get(doc, target);
+					binaryValues.get(doc);
 					return target.length > 0;
 				}
 
 				// This is the actual value returned
 				@Override
 				public float floatVal(int doc) {
-					binaryValues.get(doc, tmp);
+					binaryValues.get(doc);
 					if (tmp.length > 0) {
 						tmpFeature.setByteArrayRepresentation(tmp.bytes, tmp.offset, tmp.length);
 						return tmpFeature.getDistance(feature);

@@ -36,9 +36,10 @@ public class LireEntityProcessor extends EntityProcessorBase {
 	static {
 		classToPrefix.put(ColorLayout.class, "cl");
 		classToPrefix.put(EdgeHistogram.class, "eh");
-		classToPrefix.put(PHOG.class, "ph");
 		classToPrefix.put(OpponentHistogram.class, "oh");
+        classToPrefix.put(PHOG.class, "ph");
 		classToPrefix.put(JCD.class, "jc");
+		classToPrefix.put(SurfSolrFeature.class, "su");
 	}
 
 

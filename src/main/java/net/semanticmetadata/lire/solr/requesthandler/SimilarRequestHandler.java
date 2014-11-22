@@ -164,7 +164,7 @@ public class SimilarRequestHandler extends RequestHandlerBase {
         BytesRef bytesRef = new BytesRef();
         for (ScoreDoc scoreDoc : clDocs.scoreDocs) {
             // using DocValues to retrieve the field values ...
-            binaryValues.get(scoreDoc.doc, bytesRef);
+            binaryValues.get(scoreDoc.doc);
             clTmpFeature.setByteArrayRepresentation(bytesRef.bytes, bytesRef.offset, bytesRef.length);
             // Getting the document from the index.
             // This is the slow step based on the field compression of stored fields.

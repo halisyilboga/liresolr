@@ -52,7 +52,7 @@ public class Sandbox {
         fieldToClass.put("oh_ha", OpponentHistogram.class);
         fieldToClass.put("eh_ha", EdgeHistogram.class);
         fieldToClass.put("jc_ha", JCD.class);
-        fieldToClass.put("su_ha", SurfFeature.class);
+        fieldToClass.put("su_ha", SurfSolrFeature.class);
 
         // one time hash function read ...
         try {
@@ -90,7 +90,7 @@ public class Sandbox {
                 else if (paramField.equals("jc_ha")) feat = new JCD();
                 else if (paramField.equals("ph_ha")) feat = new PHOG();
                 else if (paramField.equals("oh_ha")) feat = new OpponentHistogram();
-                else if (paramField.equals("su_ha")) feat = new SurfFeature();
+                else if (paramField.equals("su_ha")) feat = new SurfSolrFeature();
                 else feat = new EdgeHistogram();
             }
             feat.extract(img);
@@ -176,7 +176,7 @@ public class Sandbox {
             ArrayList<SurfInterestPoint> queryPoints = new ArrayList<SurfInterestPoint>();
             IndexableField[] queryFields = query.getFields(DocumentBuilder.FIELD_NAME_SURF);
             for (IndexableField queryField : queryFields) {
-                SurfFeature feature = new SurfFeature();
+                SurfSolrFeature feature = new SurfSolrFeature();
                 feature.setByteArrayRepresentation(queryField.binaryValue().bytes, queryField.binaryValue().offset, queryField.binaryValue().length);
                 SurfInterestPoint sip = new SurfInterestPoint(feature.getDoubleHistogram());
                 queryPoints.add(sip);
@@ -204,7 +204,7 @@ public class Sandbox {
                 ArrayList<SurfInterestPoint> docPoints = new ArrayList<SurfInterestPoint>();
                 IndexableField[] docFields = doc.getFields("su_hi");
                 for (IndexableField docField : docFields) {
-                    SurfFeature feature = new SurfFeature();
+                    SurfSolrFeature feature = new SurfSolrFeature();
                     feature.setByteArrayRepresentation(docField.binaryValue().bytes, docField.binaryValue().offset, docField.binaryValue().length);
                     SurfInterestPoint sip = new SurfInterestPoint(feature.getDoubleHistogram());
                     docPoints.add(sip);
@@ -290,7 +290,7 @@ public class Sandbox {
                 ArrayList<SurfInterestPoint> queryPoints = new ArrayList<SurfInterestPoint>();
                 IndexableField[] queryFields = query.getFields(DocumentBuilder.FIELD_NAME_SURF);
                 for (IndexableField queryField : queryFields) {
-                    SurfFeature feature = new SurfFeature();
+                    SurfSolrFeature feature = new SurfSolrFeature();
                     feature.setByteArrayRepresentation(queryField.binaryValue().bytes, queryField.binaryValue().offset, queryField.binaryValue().length);
                     SurfInterestPoint sip = new SurfInterestPoint(feature.getDoubleHistogram());
                     queryPoints.add(sip);
@@ -318,7 +318,7 @@ public class Sandbox {
                     ArrayList<SurfInterestPoint> docPoints = new ArrayList<SurfInterestPoint>();
                     IndexableField[] docFields = doc.getFields("su_hi");
                     for (IndexableField docField : docFields) {
-                        SurfFeature feature = new SurfFeature();
+                        SurfSolrFeature feature = new SurfSolrFeature();
                         feature.setByteArrayRepresentation(docField.binaryValue().bytes, docField.binaryValue().offset, docField.binaryValue().length);
                         SurfInterestPoint sip = new SurfInterestPoint(feature.getDoubleHistogram());
                         docPoints.add(sip);
@@ -355,13 +355,13 @@ public class Sandbox {
             sh.setClusterFile(req.getCore().getDataDir() + "/clusters-surf.dat");
         	// Get Visual Words
         	query = sh.getVisualWords(query);
-    		
+
         	String queryString = query.getValues(DocumentBuilder.FIELD_NAME_SURF_VISUAL_WORDS)[0];
         	Query tq = qp.parse(queryString);
         	TopDocs docs = searcher.search(tq, rows);
-        	
+
         	LinkedList<HashMap<String, Comparable>> list = new LinkedList<HashMap<String, Comparable>>();
-    		
+
     		for (int i = 0; i < docs.scoreDocs.length; i++) {
                 float d = 1f / docs.scoreDocs[i].score;
                 HashMap<String, Comparable> m = new HashMap<String, Comparable>(2);
@@ -369,7 +369,7 @@ public class Sandbox {
                 m.put("id", reader.document(docs.scoreDocs[i].doc).get("id"));
                 list.add(m);
             }
-    		
+
             rsp.add("docs", list);*/
         }
     }
@@ -419,7 +419,7 @@ public class Sandbox {
                 if (binaryValues == null)
                     System.err.println("Could not find the DocValues of the query document. Are they in the index?");
                 BytesRef bytesRef = new BytesRef();
-                binaryValues.get(hits.scoreDocs[0].doc, bytesRef);
+                binaryValues.get(hits.scoreDocs[0].doc);
 //                Document d = searcher.getIndexReader().document(hits.scoreDocs[0].doc);
                 String histogramFieldName = paramField.replace("_ha", "_hi");
                 queryFeature.setByteArrayRepresentation(bytesRef.bytes, bytesRef.offset, bytesRef.length);
@@ -508,7 +508,7 @@ public class Sandbox {
                 else if (paramField.equals("jc_ha")) feat = new JCD();
                 else if (paramField.equals("ph_ha")) feat = new PHOG();
                 else if (paramField.equals("oh_ha")) feat = new OpponentHistogram();
-                else if (paramField.equals("su_ha")) feat = new SurfFeature();
+                else if (paramField.equals("su_ha")) feat = new SurfSolrFeature();
                 else feat = new EdgeHistogram();
             }
             feat.extract(img);
@@ -545,7 +545,7 @@ public class Sandbox {
                 else if (paramField.equals("jc_ha")) feat = new JCD();
                 else if (paramField.equals("ph_ha")) feat = new PHOG();
                 else if (paramField.equals("oh_ha")) feat = new OpponentHistogram();
-                else if (paramField.equals("su_ha")) feat = new SurfFeature();
+                else if (paramField.equals("su_ha")) feat = new SurfSolrFeature();
                 else feat = new EdgeHistogram();
             }
             feat.extract(img);
@@ -649,7 +649,7 @@ public class Sandbox {
 
         for (int i = paramStarts; i < docs.scoreDocs.length; i++) {
             // using DocValues to retrieve the field values ...
-            binaryValues.get(docs.scoreDocs[i].doc, bytesRef);
+            binaryValues.get(docs.scoreDocs[i].doc);
             tmpFeature.setByteArrayRepresentation(bytesRef.bytes, bytesRef.offset, bytesRef.length);
             // Getting the document from the index.
             // This is the slow step based on the field compression of stored fields.

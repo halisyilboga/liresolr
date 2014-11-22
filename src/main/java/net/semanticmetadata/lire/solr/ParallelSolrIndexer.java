@@ -390,7 +390,7 @@ public class ParallelSolrIndexer implements Runnable {
         LinkedList<LireFeature> features = new LinkedList<LireFeature>();
         int count = 0;
         boolean locallyEnded = false;
-        StringBuilder sb = new StringBuilder(1024);
+        StringBuilder sb = new StringBuilder(200);
 
         Consumer() {
             addFeatures(features);
@@ -439,22 +439,22 @@ public class ParallelSolrIndexer implements Runnable {
                             img = ImageUtils.scaleImage(img, ((int) (scaleFactor * img.getWidth())), (int) (scaleFactor * img.getHeight()));
                         }
                         byte[] tmpBytes = tmp.getFileName().getBytes();
-                        sb.append("<add>");
-                        sb.append("<doc>");
+                        sb.append("<add>\n");
+                        sb.append("<doc>\n");
                         sb.append("<field name=\"id\">");
                         sb.append(tmp.getFileName());
-                        sb.append("</field>");
+                        sb.append("</field>\n");
 
                         sb.append("<field name=\"width\">");
                         sb.append(img.getWidth());
-                        sb.append("</field>");
+                        sb.append("</field>\n");
                         sb.append("<field name=\"height\">");
                         sb.append(img.getHeight());
-                        sb.append("</field>");
+                        sb.append("</field>\n");
 
                         sb.append("<field name=\"title\">");
                         sb.append(URLEncoder.encode(new File(tmp.getFileName()).getName(), "utf-8"));
-                        sb.append("</field>");
+                        sb.append("</field>\n");
 
                         for (LireFeature feature : features) {
                             if (classToPrefix.get(feature.getClass()) != null) {
@@ -464,13 +464,13 @@ public class ParallelSolrIndexer implements Runnable {
 
                                 sb.append("<field name=\"").append(histogramField).append("\">");
                                 sb.append(Base64.encodeBase64String(feature.getByteArrayRepresentation()));
-                                sb.append("</field>");
+                                sb.append("</field>\n");
                                 sb.append("<field name=\"").append(hashesField).append("\">");
                                 sb.append(arrayToString(BitSampling.generateHashes(feature.getDoubleHistogram())));
-                                sb.append("</field>");
+                                sb.append("</field>\n");
                             }
                         }
-                        sb.append("</doc>");
+                        sb.append("</doc>\n");
                         sb.append("</add>\n");
                         // finally write everything to the stream - in case no exception was thrown..
                         if (!individualFiles) {

@@ -16,7 +16,7 @@ SOLR_HOSTNAME = 'localhost'
 #SOLR_HOSTNAME = '54.235.24.244'
 
 def run(folder="/data/digitalcandy/ml/images/"):
-    os.path.walk(folder, step, ('.xml', 'out2.txt'))
+    #os.path.walk(folder, step, ('.xml', 'out2.txt'))
     for line in open('out2.txt'):
         save(line.rstrip())
      
@@ -31,13 +31,13 @@ def step((ext, seed_path), dirname, names):
 def save(xml_file):
     try:
         tree = ET.parse(xml_file)
-        fields = tree.findall("field")
+        fields = tree.findall('doc/field', 'add')
         params = [{'id': xml_file, 'title': xml_file, 'url': getPbsUrl(xml_file[21:-9])}]
 
         for field in fields:
           key = field.get('name')
           params[0][key] = field.text
-        url = 'http://' + SOLR_HOSTNAME + ':8983/solr/Media_shard1_replica1/update?wt=json&commitWithin=1000&overwrite=true'
+        url = 'http://' + SOLR_HOSTNAME + ':8983/solr/media_shard1_replica1/update?wt=json&commitWithin=1000&overwrite=true'
         data = json.dumps(params)
         print data
         req = urllib2.Request(url)

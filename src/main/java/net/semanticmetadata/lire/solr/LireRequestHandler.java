@@ -163,7 +163,7 @@ public class LireRequestHandler extends RequestHandlerBase {
                     return;
                 }
                 BytesRef bytesRef = new BytesRef();
-                binaryValues.get(hits.scoreDocs[0].doc, bytesRef);
+                binaryValues.get(hits.scoreDocs[0].doc);
 //                Document d = searcher.getIndexReader().document(hits.scoreDocs[0].doc);
                 String histogramFieldName = paramField.replace("_ha", "_hi");
                 //LOG.info(histogramFieldName);
@@ -442,12 +442,9 @@ public class LireRequestHandler extends RequestHandlerBase {
         String name = field.replace("_ha", "_hi");
         Document doc;
         // iterating and re-ranking the documents.
-        BinaryDocValues binaryValues = MultiDocValues.getBinaryValues(searcher.getIndexReader(), name); // ***  #
-        BytesRef bytesRef = new BytesRef();
-        for (ScoreDoc scoreDoc : docs.scoreDocs) {
+        BinaryDocValues binaryValues = MultiDocValues.getBinaryValues(searcher.getIndexReader(), name);         for (ScoreDoc scoreDoc : docs.scoreDocs) {
             // using DocValues to retrieve the field values ...
-            binaryValues.get(scoreDoc.doc, bytesRef);
-            tmpFeature.setByteArrayRepresentation(bytesRef.bytes, bytesRef.offset, bytesRef.length);
+            tmpFeature.setByteArrayRepresentation(binaryValues.get(scoreDoc.doc).bytes, binaryValues.get(scoreDoc.doc).offset, binaryValues.get(scoreDoc.doc).length);
             // Getting the document from the index.
             // This is the slow step based on the field compression of stored fields.
 //            tmpFeature.setByteArrayRepresentation(d.getBinaryValue(name).bytes, d.getBinaryValue(name).offset, d.getBinaryValue(name).length);
