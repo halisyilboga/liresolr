@@ -13,11 +13,12 @@ import net.semanticmetadata.lire.solr.utils.SurfUtils;
 import net.semanticmetadata.lire.utils.ImageUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.*;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.*;
 import org.apache.lucene.util.BytesRef;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
+import org.apache.solr.common.params.SolrParams;
+import org.apache.solr.common.util.NamedList;
 import org.apache.solr.handler.RequestHandlerBase;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.SolrQueryResponse;
@@ -27,8 +28,6 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.*;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.solr.common.util.NamedList;
 
 public class IdentityRequestHandler extends RequestHandlerBase {
 
@@ -36,6 +35,8 @@ public class IdentityRequestHandler extends RequestHandlerBase {
     volatile long numErrors;
     volatile long numRequests;
     volatile long totalTime;
+    static int defaultNumberOfResults = 60;
+    static int defaultStartValue = 0;
 
     @Override
     public NamedList<Object> getStatistics() {
@@ -136,22 +137,65 @@ public class IdentityRequestHandler extends RequestHandlerBase {
         // Surf re-rank
         time = System.currentTimeMillis();
 
+        SolrDocumentList results = new SolrDocumentList();
+        float maxScore = 0.0F;
+        int numFound = 0;
+        List<SolrDocument> slice = new ArrayList<SolrDocument>();
+        SolrParams params = req.getParams();
+        int paramRows = defaultNumberOfResults;
+        if (params.getInt("rows") != null) {
+            paramRows = params.getInt("rows");
+        }
+
+        int paramStarts = defaultStartValue;
+        if (params.getInt("start") != null) {
+            paramStarts = params.getInt("start");
+        }
+
+
         if (resultScoreDocs.size() == 1 && resultScoreDocs.get(0).getDistance() < threshold2) {
+            Float score = (Float) resultScoreDocs.get(0).getDistance();
+            if (maxScore < score) {
+                maxScore = score;
+            }
+            if (numFound >= paramStarts && numFound < paramStarts + paramRows) {
+                SolrDocument solrDocument = new SolrDocument();
+                solrDocument.setField("id", resultScoreDocs.get(0).getDocument().get("id"));
+                solrDocument.setField("title", resultScoreDocs.get(0).getDocument().get("title"));
+                solrDocument.setField("distance", score);
+                slice.add(solrDocument);
+            }
+            numFound++;
+
             res.add("identity", true);
-            HashMap<String, String> map = new HashMap<>(2);
-            map.put("id", resultScoreDocs.get(0).getDocument().get("id"));
-            map.put("d", String.format("%.2f", resultScoreDocs.get(0).getDistance()));
-            map.put("title", resultScoreDocs.get(0).getDocument().get("title"));
-            res.add("doc", map);
+//            HashMap<String, String> map = new HashMap<>(2);
+//            map.put("id", resultScoreDocs.get(0).getDocument().get("id"));
+//            map.put("d", String.format("%.2f", resultScoreDocs.get(0).getDistance()));
+//            map.put("title", resultScoreDocs.get(0).getDocument().get("title"));
+//            res.add("doc", map);
         } else if (resultScoreDocs.size() >= 1) {
             SimpleResult surfIdentityResult = surfIdentityCheck(image, resultScoreDocs, properties);
             if (surfIdentityResult != null) {
+
+                Float score = (Float) surfIdentityResult.getDistance();
+                if (maxScore < score) {
+                    maxScore = score;
+                }
+                if (numFound >= paramStarts && numFound < paramStarts + paramRows) {
+                    SolrDocument solrDocument = new SolrDocument();
+                    solrDocument.setField("id", surfIdentityResult.getDocument().get("id"));
+                    solrDocument.setField("title", surfIdentityResult.getDocument().get("title"));
+                    solrDocument.setField("distance", score);
+                    slice.add(solrDocument);
+                }
+                numFound++;
+
                 res.add("identity", true);
-                HashMap<String, String> map = new HashMap<>(2);
-                map.put("id", surfIdentityResult.getDocument().get("id"));
-                map.put("title", surfIdentityResult.getDocument().get("title"));
-                map.put("d", String.format("%.2f", surfIdentityResult.getDistance()));
-                res.add("doc", map);
+//                HashMap<String, String> map = new HashMap<>(2);
+//                map.put("id", surfIdentityResult.getDocument().get("id"));
+//                map.put("title", surfIdentityResult.getDocument().get("title"));
+//                map.put("d", String.format("%.2f", surfIdentityResult.getDistance()));
+//                res.add("doc", map);
             } else {
                 res.add("identity", false);
             }
@@ -161,6 +205,14 @@ public class IdentityRequestHandler extends RequestHandlerBase {
         time = System.currentTimeMillis() - time;
         res.add("ReRankSurfTime", time + "");
         totalTime += System.currentTimeMillis() - startTime;
+
+        results.clear();
+        results.addAll(slice);
+        results.setNumFound(docs.scoreDocs.length);
+        results.setMaxScore(maxScore);
+        results.setStart(paramStarts);
+        res.add("response", results);
+        
         /*LinkedList<HashMap<String, String>> result = new LinkedList<HashMap<String, String>>();
          for (SimpleResult r : resultScoreDocs) {
          HashMap<String, String> map = new HashMap<String, String>(2);

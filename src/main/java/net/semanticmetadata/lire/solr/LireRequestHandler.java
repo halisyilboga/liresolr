@@ -4,38 +4,33 @@ import net.semanticmetadata.lire.imageanalysis.*;
 import net.semanticmetadata.lire.impl.SimpleResult;
 import net.semanticmetadata.lire.indexing.hashing.BitSampling;
 import net.semanticmetadata.lire.utils.ImageUtils;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.BinaryDocValues;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.MultiDocValues;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.*;
 import org.apache.lucene.util.BytesRef;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
+import org.apache.solr.common.params.CommonParams;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.handler.RequestHandlerBase;
+import org.apache.solr.parser.ParseException;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.SolrQueryResponse;
+import org.apache.solr.schema.SchemaField;
+import org.apache.solr.search.QParser;
 import org.apache.solr.search.SolrIndexSearcher;
+import org.apache.solr.search.SyntaxError;
 
 import javax.imageio.ImageIO;
-
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.TreeSet;
-import org.apache.lucene.search.ScoreDoc;
+import java.util.*;
 
 /**
  * This is the main LIRE RequestHandler for the Solr Plugin. It supports query
@@ -44,7 +39,7 @@ import org.apache.lucene.search.ScoreDoc;
  *
  * @author Mathias Lux, mathias@juggle.at, 07.07.13
  * @author Nurul Ferdous <nurul@ferdo.us>
- * {@link net.semanticmetadata.lire.solr.LireRequestHandler} objects.
+ *         {@link net.semanticmetadata.lire.solr.LireRequestHandler} objects.
  */
 public class LireRequestHandler extends RequestHandlerBase {
 
@@ -107,6 +102,7 @@ public class LireRequestHandler extends RequestHandlerBase {
     @Override
     public void handleRequestBody(SolrQueryRequest req, SolrQueryResponse rsp) throws Exception {
         SolrParams params = req.getParams();
+
         numRequests++;
         long startTime = System.currentTimeMillis();
         try {
@@ -184,7 +180,7 @@ public class LireRequestHandler extends RequestHandlerBase {
                 int[] hashes = BitSampling.generateHashes(queryFeature.getDoubleHistogram());
                 // just use 50% of the hashes for search ...
                 BooleanQuery query = createQuery(hashes, paramField, 0.5d);
-                doSearch(rsp, searcher, paramField, paramStarts, paramRows, query, queryFeature);
+                doSearch(rsp, req, paramField, paramStarts, paramRows, query, queryFeature);
             } else {
                 numErrors++;
                 rsp.add("Error", "Did not find an image with the given id " + req.getParams().get("id"));
@@ -193,6 +189,10 @@ public class LireRequestHandler extends RequestHandlerBase {
             numErrors++;
             rsp.add("Error", "There was an error with your search for the image with the id " + req.getParams().get("id")
                     + ": " + ex.getMessage());
+        } catch (SyntaxError syntaxError) {
+            syntaxError.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
     }
 
@@ -241,24 +241,38 @@ public class LireRequestHandler extends RequestHandlerBase {
      * @throws InstantiationException
      * @throws IllegalAccessException
      */
-    private void handleUrlSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, InstantiationException, IllegalAccessException {
-        SolrParams params = req.getParams();
-        String paramUrl = params.get("url");
+    private void handleUrlSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, InstantiationException, IllegalAccessException, ParseException, SyntaxError {
 
+        SolrParams params = req.getParams();
+        String q = params.get(CommonParams.Q);
+        String[] fqs = params.getParams(CommonParams.FQ);
+        int paramStarts = defaultStartValue;
+        try {
+            paramStarts = Integer.parseInt(params.get(CommonParams.START));
+        } catch (Exception e) { /* default */ }
+        int paramRows = defaultNumberOfResults;
+        try {
+            paramRows = Integer.parseInt(params.get(CommonParams.ROWS));
+        } catch (Exception e) { /* default */ }
+
+        String paramUrl = null;
+        if (params.get("url") != null) {
+            paramUrl = params.get("url");
+        }
         String paramField = defaultAlgorithmField;
         if (req.getParams().get("field") != null) {
             paramField = req.getParams().get("field");
         }
 
-        int paramRows = defaultNumberOfResults;
-        if (params.get("rows") != null) {
-            paramRows = params.getInt("rows");
-        }
-
-        int paramStarts = defaultStartValue;
-        if (params.get("start") != null) {
-            paramStarts = params.getInt("start");
-        }
+//        int paramRows = defaultNumberOfResults;
+//        if (params.get("rows") != null) {
+//            paramRows = params.getInt("rows");
+//        }
+//
+//        int paramStarts = defaultStartValue;
+//        if (params.get("start") != null) {
+//            paramStarts = params.getInt("start");
+//        }
 
         LireFeature feat = null;
         BooleanQuery query = null;
@@ -297,7 +311,7 @@ public class LireRequestHandler extends RequestHandlerBase {
         }
         // search if the feature has been extracted.
         if (feat != null) {
-            doSearch(rsp, req.getSearcher(), paramField, paramStarts, paramRows, query, feat);
+            doSearch(rsp, req, paramField, paramStarts, paramRows, query, feat);
         }
     }
 
@@ -362,7 +376,7 @@ public class LireRequestHandler extends RequestHandlerBase {
      * @throws IllegalAccessException
      * @throws InstantiationException
      */
-    private void handleHashSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, IllegalAccessException, InstantiationException {
+    private void handleHashSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, IllegalAccessException, InstantiationException, ParseException, SyntaxError {
         SolrParams params = req.getParams();
         SolrIndexSearcher searcher = req.getSearcher();
         // get the params needed:
@@ -406,7 +420,7 @@ public class LireRequestHandler extends RequestHandlerBase {
         queryFeature.setByteArrayRepresentation(featureVector);
 
         // get results:
-        doSearch(rsp, searcher, paramField, paramStarts, paramRows, query, queryFeature);
+        doSearch(rsp, req, paramField, paramStarts, paramRows, query, queryFeature);
     }
 
     /**
@@ -414,7 +428,7 @@ public class LireRequestHandler extends RequestHandlerBase {
      * feature based re-ranking.
      *
      * @param rsp
-     * @param searcher
+     * @param req
      * @param field
      * @param paramRows
      * @param query
@@ -423,12 +437,24 @@ public class LireRequestHandler extends RequestHandlerBase {
      * @throws IllegalAccessException
      * @throws InstantiationException
      */
-    private void doSearch(SolrQueryResponse rsp, SolrIndexSearcher searcher, String field, int paramStarts, int paramRows, BooleanQuery query, LireFeature queryFeature) throws IOException, IllegalAccessException, InstantiationException {
+    private void doSearch(SolrQueryResponse rsp, SolrQueryRequest req, String field, int paramStarts, int paramRows, BooleanQuery query, LireFeature queryFeature) throws IOException, IllegalAccessException, InstantiationException, ParseException, SyntaxError {
+
+        // extract params from request
+        SolrParams params = req.getParams();
+        String q = params.get(CommonParams.Q);
+        String[] fqs = params.getParams(CommonParams.FQ);
+        SolrDocumentList results = new SolrDocumentList();
+        Map<String, SchemaField> fields = req.getSchema().getFields();
+        int ndocs = paramStarts + paramRows;
+        Set<Integer> alreadyFound = new HashSet<Integer>();
+        Filter filter = buildFilter(fqs, req);
+
         int maximumHits = paramStarts + paramRows;
         // temp feature instance
         LireFeature tmpFeature = queryFeature.getClass().newInstance();
         // Taking the time of search for statistical purposes.
         time = System.currentTimeMillis();
+        SolrIndexSearcher searcher = req.getSearcher();
         TopDocs docs = searcher.search(query, candidateResultNumber);
         time = System.currentTimeMillis() - time;
         rsp.add("RawDocsCount", docs.scoreDocs.length + "");
@@ -442,7 +468,8 @@ public class LireRequestHandler extends RequestHandlerBase {
         String name = field.replace("_ha", "_hi");
         Document doc;
         // iterating and re-ranking the documents.
-        BinaryDocValues binaryValues = MultiDocValues.getBinaryValues(searcher.getIndexReader(), name);         for (ScoreDoc scoreDoc : docs.scoreDocs) {
+        BinaryDocValues binaryValues = MultiDocValues.getBinaryValues(searcher.getIndexReader(), name);
+        for (ScoreDoc scoreDoc : docs.scoreDocs) {
             // using DocValues to retrieve the field values ...
             tmpFeature.setByteArrayRepresentation(binaryValues.get(scoreDoc.doc).bytes, binaryValues.get(scoreDoc.doc).offset, binaryValues.get(scoreDoc.doc).length);
             // Getting the document from the index.
@@ -462,20 +489,63 @@ public class LireRequestHandler extends RequestHandlerBase {
                 maxDistance = resultScoreDocs.last().getDistance();
             }
         }
-        //LOG.info("** Creating response.");
+//        //LOG.info("** Creating response.");
         time = System.currentTimeMillis() - time;
         rsp.add("ReRankSearchTime", time + "");
-        LinkedList list = new LinkedList();
-        for (Iterator<SimpleResult> it = resultScoreDocs.iterator(); it.hasNext();) {
-            SimpleResult result = it.next();
-            HashMap map = new HashMap(2);
-            map.put("d", String.format("%.2f", result.getDistance()));
-            map.put("id", result.getDocument().get("id"));
-            map.put("title", result.getDocument().get("title"));
-            list.add(map);
-        }
-        rsp.add("docs", list.subList(paramStarts, maximumHits));
+//        LinkedList list = new LinkedList();
+//        for (Iterator<SimpleResult> it = resultScoreDocs.iterator(); it.hasNext();) {
+//            SimpleResult result = it.next();
+//            HashMap map = new HashMap(2);
+//            map.put("d", String.format("%.2f", result.getDistance()));
+//            map.put("id", result.getDocument().get("id"));
+//            map.put("title", result.getDocument().get("title"));
+//            list.add(map);
+//        }
+//        rsp.add("docs", list.subList(paramStarts, maximumHits));
         //res.add("params", req.getParams().toNamedList());
+
+        float maxScore = 0.0F;
+        int numFound = 0;
+        //LinkedList list = new LinkedList();
+        List<SolrDocument> slice = new ArrayList<SolrDocument>();
+
+        for (Iterator<SimpleResult> it = resultScoreDocs.iterator(); it.hasNext(); ) {
+            SimpleResult sdoc = it.next();
+
+            Float score = (Float) sdoc.getDistance();
+            if (maxScore < score) {
+                maxScore = score;
+            }
+            if (numFound >= paramStarts && numFound < paramStarts + paramRows) {
+                SolrDocument solrDocument = new SolrDocument();
+                solrDocument.setField("id", sdoc.getDocument().get("id"));
+                solrDocument.setField("title", sdoc.getDocument().get("title"));
+                solrDocument.setField("distance", score);
+                slice.add(solrDocument);
+            }
+            numFound++;
+        }
+
+        results.clear();
+        results.addAll(slice);
+        results.setNumFound(docs.scoreDocs.length);
+        results.setMaxScore(maxScore);
+        results.setStart(paramStarts);
+        rsp.add("response", results);
+
+    }
+
+    private Filter buildFilter(String[] fqs, SolrQueryRequest req)
+            throws IOException, ParseException, SyntaxError {
+        if (fqs != null && fqs.length > 0) {
+            BooleanQuery fquery = new BooleanQuery();
+            for (int i = 0; i < fqs.length; i++) {
+                QParser parser = QParser.getParser(fqs[i], null, req);
+                fquery.add(parser.getQuery(), BooleanClause.Occur.MUST);
+            }
+            return new CachingWrapperFilter(new QueryWrapperFilter(fquery));
+        }
+        return null;
     }
 
     @Override
@@ -519,5 +589,6 @@ public class LireRequestHandler extends RequestHandlerBase {
         }
         return query;
     }
+
 
 }

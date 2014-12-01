@@ -20,6 +20,10 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.util.BytesRef;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
+import org.apache.solr.common.params.SolrParams;
+import org.apache.solr.common.util.NamedList;
 import org.apache.solr.handler.RequestHandlerBase;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.SolrQueryResponse;
@@ -29,7 +33,6 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.*;
-import org.apache.solr.common.util.NamedList;
 
 public class SimilarRequestHandler extends RequestHandlerBase {
 
@@ -37,6 +40,9 @@ public class SimilarRequestHandler extends RequestHandlerBase {
     volatile long numErrors;
     volatile long numRequests;
     volatile long totalTime;
+    static int defaultNumberOfResults = 60;
+    static int defaultStartValue = 0;
+
 
     @Override
     public NamedList<Object> getStatistics() {
@@ -79,6 +85,7 @@ public class SimilarRequestHandler extends RequestHandlerBase {
     @Override
     public void handleRequestBody(SolrQueryRequest req, SolrQueryResponse res)
             throws Exception {
+
         numRequests++;
         long startTime = System.currentTimeMillis();
 
@@ -135,7 +142,7 @@ public class SimilarRequestHandler extends RequestHandlerBase {
         suFeat = sh.getVisualWords(suFeat);
 
         // Create queries
-		/* CL */
+        /* CL */
         BooleanQuery clQuery = createQuery(clHash, "cl_ha", 0.5d);
         /* SURF */
         Query suQuery = qp.parse(suFeat.getValues(DocumentBuilder.FIELD_NAME_SURF_VISUAL_WORDS)[0]);
@@ -200,16 +207,58 @@ public class SimilarRequestHandler extends RequestHandlerBase {
         time = System.currentTimeMillis() - time;
         res.add("ReRankSearchTime", time + "");
 
-        LinkedList<HashMap<String, String>> result = new LinkedList<>();
-        for (SimpleResult r : resultScoreDocs) {
-            HashMap<String, String> map = new HashMap<>(2);
-            map.put("id", r.getDocument().get("id"));
-            map.put("title", r.getDocument().get("title"));
-            map.put("d", String.format("%.2f", r.getDistance()));
-            result.add(map);
+        SolrDocumentList results = new SolrDocumentList();
+        float maxScore = 0.0F;
+        int numFound = 0;
+        List<SolrDocument> slice = new ArrayList<SolrDocument>();
+        SolrParams params = req.getParams();
+        int paramRows = defaultNumberOfResults;
+        if (params.getInt("rows") != null) {
+            paramRows = params.getInt("rows");
         }
-        res.add("docs", result);
-        res.add("params", req.getParams().toNamedList());
+
+        int paramStarts = defaultStartValue;
+        if (params.getInt("start") != null) {
+            paramStarts = params.getInt("start");
+        }
+
+
+        for (SimpleResult sdoc : resultScoreDocs) {
+
+            Float score = (Float) sdoc.getDistance();
+            if (maxScore < score) {
+                maxScore = score;
+            }
+            if (numFound >= paramStarts && numFound < paramStarts + paramRows) {
+                SolrDocument solrDocument = new SolrDocument();
+                solrDocument.setField("id", sdoc.getDocument().get("id"));
+                solrDocument.setField("title", sdoc.getDocument().get("title"));
+                solrDocument.setField("distance", score);
+                slice.add(solrDocument);
+            }
+            numFound++;
+        }
+
+
+        results.clear();
+        results.addAll(slice);
+        results.setNumFound(resultScoreDocs.size());
+        results.setMaxScore(maxScore);
+        results.setStart(paramStarts);
+        res.add("response", results);
+
+//
+//
+//        LinkedList<HashMap<String, String>> result = new LinkedList<>();
+//        for (SimpleResult r : resultScoreDocs) {
+//            HashMap<String, String> map = new HashMap<>(2);
+//            map.put("id", r.getDocument().get("id"));
+//            map.put("title", r.getDocument().get("title"));
+//            map.put("d", String.format("%.2f", r.getDistance()));
+//            result.add(map);
+//        }
+//        res.add("docs", result);
+//        res.add("params", req.getParams().toNamedList());
     }
 
     private void rerank(ArrayList<SurfInterestPoint> query, Document doc, int indexNumber, TreeSet<SimpleResult> resultScoreDocs, int numSimImages) {

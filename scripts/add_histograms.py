@@ -16,7 +16,7 @@ SOLR_HOSTNAME = 'localhost'
 #SOLR_HOSTNAME = '54.235.24.244'
 
 def run(folder="/data/digitalcandy/ml/images/"):
-    #os.path.walk(folder, step, ('.xml', 'out2.txt'))
+    os.path.walk(folder, step, ('.xml', 'out2.txt'))
     for line in open('out2.txt'):
         save(line.rstrip())
      
@@ -39,7 +39,7 @@ def save(xml_file):
           params[0][key] = field.text
         url = 'http://' + SOLR_HOSTNAME + ':8983/solr/media_shard1_replica1/update?wt=json&commitWithin=1000&overwrite=true'
         data = json.dumps(params)
-        print data
+        #print data
         req = urllib2.Request(url)
         req.add_header('Content-type', 'application/json')
         req.data = data
