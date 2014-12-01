@@ -177,7 +177,7 @@ public class IdentityRequestHandler extends RequestHandlerBase {
             SimpleResult surfIdentityResult = surfIdentityCheck(image, resultScoreDocs, properties);
             if (surfIdentityResult != null) {
 
-                Float score = (Float) surfIdentityResult.getDistance();
+                Float score = surfIdentityResult.getDistance();
                 if (maxScore < score) {
                     maxScore = score;
                 }
@@ -208,11 +208,11 @@ public class IdentityRequestHandler extends RequestHandlerBase {
 
         results.clear();
         results.addAll(slice);
-        results.setNumFound(docs.scoreDocs.length);
+        results.setNumFound(slice.size());
         results.setMaxScore(maxScore);
         results.setStart(paramStarts);
         res.add("response", results);
-        
+
         /*LinkedList<HashMap<String, String>> result = new LinkedList<HashMap<String, String>>();
          for (SimpleResult r : resultScoreDocs) {
          HashMap<String, String> map = new HashMap<String, String>(2);

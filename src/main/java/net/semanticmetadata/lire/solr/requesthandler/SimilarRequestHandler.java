@@ -225,7 +225,7 @@ public class SimilarRequestHandler extends RequestHandlerBase {
 
         for (SimpleResult sdoc : resultScoreDocs) {
 
-            Float score = (Float) sdoc.getDistance();
+            Float score = sdoc.getDistance();
             if (maxScore < score) {
                 maxScore = score;
             }
@@ -242,7 +242,7 @@ public class SimilarRequestHandler extends RequestHandlerBase {
 
         results.clear();
         results.addAll(slice);
-        results.setNumFound(resultScoreDocs.size());
+        results.setNumFound(slice.size());
         results.setMaxScore(maxScore);
         results.setStart(paramStarts);
         res.add("response", results);
