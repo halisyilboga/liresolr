@@ -520,7 +520,8 @@ public class LireRequestHandler extends RequestHandlerBase {
                 SolrDocument solrDocument = new SolrDocument();
                 solrDocument.setField("id", sdoc.getDocument().get("id"));
                 solrDocument.setField("title", sdoc.getDocument().get("title"));
-                solrDocument.setField("distance", score);
+                solrDocument.setField("url", sdoc.getDocument().get("url"));
+                solrDocument.setField("score", score);
                 slice.add(solrDocument);
             }
             numFound++;
