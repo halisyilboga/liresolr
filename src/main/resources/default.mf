@@ -1,4 +1,0 @@
-Build-Date: 04.12.2014 03:05 AM
-Build-Number: 217
-Class-Path: lib/OpenSurf.jar lib/solr-4.10.0.war lib/solr-morphlines-cell-4.10.0.jar lib/commons-codec-1.8.jar lib/solr-analysis-extras-4.10.0.jar lib/solr-morphlines-core-4.10.0.jar lib/commons-io-2.4.jar lib/solr-cell-4.10.0.jar lib/solr-solrj-4.10.0.jar lib/commons-math3-3.2.jar lib/solr-clustering-4.10.0.jar lib/solr-test-framework-4.10.0.jar lib/lire.jar lib/solr-core-4.10.0.jar lib/solr-uima-4.10.0.jar lib/lucene-analyzers-common-4.10.0.jar lib/solr-dataimporthandler-4.10.0.jar lib/solr-velocity-4.10.0.jar lib/lucene-core-4.10.0.jar lib/solr-dataimporthandler-extras-4.10.0.jar lib/spatial4j-0.4.1.jar lib/lucene-queries-4.10.0.jar lib/solr-langid-4.10.0.jar lib/lucene-queryparser-4.10.0.jar lib/solr-map-reduce-4.10.0.jar
-Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
