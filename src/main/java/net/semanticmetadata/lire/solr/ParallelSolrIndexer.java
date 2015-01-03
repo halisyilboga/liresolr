@@ -40,6 +40,7 @@ package net.semanticmetadata.lire.solr;
 
 import com.jhlabs.image.DespeckleFilter;
 import net.semanticmetadata.lire.imageanalysis.*;
+import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
 import net.semanticmetadata.lire.indexing.hashing.BitSampling;
 import net.semanticmetadata.lire.indexing.parallel.WorkItem;
 import net.semanticmetadata.lire.solr.indexing.ImageDataProcessor;
@@ -340,8 +341,12 @@ public class ParallelSolrIndexer implements Runnable {
         features.add(new JCD());
 
         // new features
-        features.add(new CEDD());
-        features.add(new ScalableColor());
+        features.add(new CEDD()); //ce
+        features.add(new ScalableColor()); //sc
+        features.add(new OpponentHistogram()); //oh
+        features.add(new FCTH()); //fc
+        features.add(new FuzzyOpponentHistogram()); //fo
+        features.add(new JointHistogram()); //jh
     }
 
     public boolean isPreprocessing() {
@@ -504,7 +509,6 @@ public class ParallelSolrIndexer implements Runnable {
                         sb.append("<field name=\"type\">");
                         sb.append(img.getType());
                         sb.append("</field>");
-                        
 
                         sb.append("<field name=\"title\">");
                         if (idp == null) {
