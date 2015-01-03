@@ -196,7 +196,7 @@ function hashSearch(field, url) {
                 for (var i = 0; i < Math.max(5, numHashes); i++) {
                     hashString += myResult.response.hashes[i] + " ";
                 }
-                queryString = "http://localhost:8983/solr/media_shard1_replica1/select?q=id:*&fq=" + field + "_ha:(" + hashString.trim() + ")&wt=json&rows=60";
+                queryString = "http://localhost:8983/solr/media_shard1_replica1/select?q=id:*&fq=" + field + "_ha:(" + hashString.trim() + ")&wt=json&rows=60&fl=*,score";
                 if ($('input[name="radio-v-1"]:checked').val() === "boost") {
                     queryString = queryString + "&defType=edismax&boost=div(recip(lirefunc(" + encodeURIComponent(field + ",\"" + myResult.response.histogram + "\"") + "),1,100,100),query($q))"; // boost
                     console.log("Using boost");
