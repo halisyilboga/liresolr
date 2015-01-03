@@ -528,7 +528,7 @@ public class LireRequestHandler extends RequestHandlerBase {
                 solrDocument.setField("width", sdoc.getDocument().get("width"));
                 solrDocument.setField("height", sdoc.getDocument().get("height"));
                 solrDocument.setField("type", sdoc.getDocument().get("type"));
-                solrDocument.setField("distance", distance);
+                solrDocument.setField("score", distance);
                 slice.add(solrDocument);
             }
             numFound++;
