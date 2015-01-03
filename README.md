@@ -28,6 +28,10 @@ Supported values for feature field parameters, e.g. lireq?field=cl_ha:
 -  **jc_ha** .. JCD
 -  **ce_ha** .. CEDD
 -  **sc_ha** .. ScalableColor
+-  **fc_ha** .. FCTH
+-  **fo_ha** .. FuzzyOpponentHistogram
+-  **jh_ha** .. JointHistogram
+-  **su_ha** .. SurfSolrFeature
 
 Getting random images
 ---------------------
@@ -104,27 +108,45 @@ Use of the request handler is detailed above.
 You'll also need the respective fields in the schema.xml file:
 
     <fields>
-       <!-- file path for ID -->
-       <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" />
-       <!-- the sole file name -->
-       <field name="title" type="text_general" indexed="true" stored="true" multiValued="true"/>
-       <!-- Edge Histogram -->
-       <field name="eh_ha" type="text_ws" indexed="true" stored="false" required="false"/>
-       <field name="eh_hi" type="binaryDV"  indexed="false" stored="true" required="false"/>
-       <!-- ColorLayout -->
-       <field name="cl_ha" type="text_ws" indexed="true" stored="false" required="false"/>
-       <field name="cl_hi" type="binaryDV"  indexed="false" stored="true" required="false"/>
-       <!-- PHOG -->
-       <field name="ph_ha" type="text_ws" indexed="true" stored="false" required="false"/>
-       <field name="ph_hi" type="binaryDV"  indexed="false" stored="true" required="false"/>
-       <!-- JCD -->
-       <field name="jc_ha" type="text_ws" indexed="true" stored="false" required="false"/>
-       <field name="jc_hi" type="binaryDV"  indexed="false" stored="true" required="false"/>
-       <!-- OpponentHistogram -->
-       <!--field name="oh_ha" type="text_ws" indexed="true" stored="false" required="false"/-->
-       <!--field name="oh_hi" type="binaryDV"  indexed="false" stored="true" required="false"/-->
-       <!-- Needed for SOLR -->
-       <field name="_version_" type="long" indexed="true" stored="true"/>
+        <!-- file path for ID -->
+        <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" />
+        <!-- the sole file name -->
+        <field name="title" type="text_general" indexed="true" stored="true" multiValued="true"/>
+        <!-- Edge Histogram -->
+        <field indexed="true" name="eh_ha" required="false" stored="false" type="text_ws"/>
+        <field indexed="false" name="eh_hi" required="false" stored="true" type="binaryDV"/>
+        <!-- ColorLayout -->
+        <field indexed="true" name="cl_ha" required="false" stored="false" type="text_ws"/>
+        <field indexed="false" name="cl_hi" required="false" stored="true" type="binaryDV"/>
+        <!-- PHOG -->
+        <field indexed="true" name="ph_ha" required="false" stored="false" type="text_ws"/>
+        <field indexed="false" name="ph_hi" required="false" stored="true" type="binaryDV"/>
+        <!-- JCD -->
+        <field indexed="true" name="jc_ha" required="false" stored="false" type="text_ws"/>
+        <field indexed="false" name="jc_hi" required="false" stored="true" type="binaryDV"/>
+        <!-- OpponentHistogram -->
+        <field indexed="true" name="oh_ha" required="false" stored="false" type="text_ws"/>
+        <field indexed="false" name="oh_hi" required="false" stored="true" type="binaryDV"/>
+        <!-- CEDD -->
+        <field indexed="true" name="ce_ha" required="false" stored="false" type="text_ws"/>
+        <field indexed="false" name="ce_hi" required="false" stored="true" type="binaryDV"/>
+        <!-- ScalableColor -->
+        <field indexed="true" name="sc_ha" required="false" stored="false" type="text_ws"/>
+        <field indexed="false" name="sc_hi" required="false" stored="true" type="binaryDV"/>
+        <!-- SurfSolrFeature -->
+        <field indexed="true" name="su_ha" required="false" stored="false" type="text_ws"/>
+        <field indexed="false" name="su_hi" required="false" stored="true" type="binaryDV"/>
+        <!-- FCTH -->
+        <field indexed="true" name="fc_ha" required="false" stored="false" type="text_ws"/>
+        <field indexed="false" name="fc_hi" required="false" stored="true" type="binaryDV"/>
+        <!-- FuzzyOpponentHistogram -->
+        <field indexed="true" name="fo_ha" required="false" stored="false" type="text_ws"/>
+        <field indexed="false" name="fo_hi" required="false" stored="true" type="binaryDV"/>
+        <!-- JointHistogram -->
+        <field indexed="true" name="jh_ha" required="false" stored="false" type="text_ws"/>
+        <field indexed="false" name="jh_hi" required="false" stored="true" type="binaryDV"/>
+        <!-- Needed for SOLR -->
+        <field name="_version_" type="long" indexed="true" stored="true"/>
     </fields>
 
 Do not forget to add the custom field at the very same file:
@@ -134,8 +156,7 @@ Do not forget to add the custom field at the very same file:
 There is also a sort function based on LIRE. The function parser needs to be added to the
 solarconfig.xml file like this:
 
-      <valueSourceParser name="lirefunc"
-        class="net.semanticmetadata.lire.solr.LireValueSourceParser" />
+      <valueSourceParser name="lirefunc" class="net.semanticmetadata.lire.solr.LireValueSourceParser" />
 
 Then the function lirefunc(arg1,arg2) is available for function queries. Two arguments are necessary and are defined as:
 
@@ -224,7 +245,7 @@ solrconfig.xml, and then give the configuration for the EntityProcessor like thi
             <entity name="f"
                     processor="FileListEntityProcessor"
                     transformer="TemplateTransformer"
-                    baseDir="D:\Java\Projects\Lire\testdata\wang-1000\"
+                    baseDir="/data/dynamicguy/ml/images"
                     fileName=".*jpg"
                     recursive="true"
                     rootEntity="false" dataSource="null" onError="skip">
@@ -240,6 +261,18 @@ solrconfig.xml, and then give the configuration for the EntityProcessor like thi
                     <field column="jc_hi"/>
                     <field column="eh_ha"/>
                     <field column="eh_hi"/>
+                    <field column="ce_ha"/>
+                    <field column="ce_hi"/>
+                    <field column="sc_ha"/>
+                    <field column="sc_hi"/>
+                    <field column="su_ha"/>
+                    <field column="su_hi"/>
+                    <field column="fc_ha"/>
+                    <field column="fc_hi"/>
+                    <field column="fo_ha"/>
+                    <field column="fo_hi"/>
+                    <field column="jh_ha"/>
+                    <field column="jh_hi"/>
                 </entity>
             </entity>
         </document>

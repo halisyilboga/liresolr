@@ -18,3 +18,4 @@ liresolr.iml
 /logs/
 docs.xml
 out.txt
+*.log
