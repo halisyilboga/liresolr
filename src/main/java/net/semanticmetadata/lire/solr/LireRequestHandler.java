@@ -517,9 +517,9 @@ public class LireRequestHandler extends RequestHandlerBase {
         List<SolrDocument> slice = new ArrayList<SolrDocument>();
 
         for (SimpleResult sdoc : resultScoreDocs) {
-            Float distance = (Float) sdoc.getDistance();
-            if (maxDistance < distance) {
-                maxDistance = distance;
+            Float score = (Float) sdoc.getDistance();
+            if (maxDistance < score) {
+                maxDistance = score;
             }
             if (numFound >= paramStarts && numFound < paramStarts + paramRows) {
                 SolrDocument solrDocument = new SolrDocument();
@@ -528,7 +528,7 @@ public class LireRequestHandler extends RequestHandlerBase {
                 solrDocument.setField("width", sdoc.getDocument().get("width"));
                 solrDocument.setField("height", sdoc.getDocument().get("height"));
                 solrDocument.setField("type", sdoc.getDocument().get("type"));
-                solrDocument.setField("score", distance);
+                solrDocument.setField("score", score);
                 slice.add(solrDocument);
             }
             numFound++;
@@ -538,7 +538,7 @@ public class LireRequestHandler extends RequestHandlerBase {
         results.addAll(slice);
         results.setNumFound(docs.scoreDocs.length);
         results.setMaxScore(maxDistance);
-        results.setStart(paramStarts);
+        results.setStart(paramStarts);        
         rsp.add("response", results);
 
     }
