@@ -38,8 +38,8 @@
  */
 package net.semanticmetadata.lire.solr;
 
-import net.semanticmetadata.lire.imageanalysis.EdgeHistogram;
-import net.semanticmetadata.lire.imageanalysis.LireFeature;
+import net.semanticmetadata.lire.imageanalysis.*;
+import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
 import net.semanticmetadata.lire.impl.SimpleResult;
 import net.semanticmetadata.lire.indexing.hashing.BitSampling;
 import net.semanticmetadata.lire.utils.ImageUtils;
@@ -66,7 +66,6 @@ import java.text.ParseException;
 import java.util.*;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
-import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.CommonParams;
 import org.apache.solr.schema.SchemaField;
 import org.apache.solr.search.QParser;
@@ -118,7 +117,6 @@ public class LireRequestHandler extends RequestHandlerBase {
     @Override
     public void init(NamedList args) {
         super.init(args);
-
         // Caching off by default
         httpCaching = false;
         if (args != null) {
@@ -519,9 +517,9 @@ public class LireRequestHandler extends RequestHandlerBase {
         List<SolrDocument> slice = new ArrayList<SolrDocument>();
 
         for (SimpleResult sdoc : resultScoreDocs) {
-            Float score = (Float) sdoc.getDistance();
-            if (maxDistance < score) {
-                maxDistance = score;
+            Float distance = (Float) sdoc.getDistance();
+            if (maxDistance < distance) {
+                maxDistance = distance;
             }
             if (numFound >= paramStarts && numFound < paramStarts + paramRows) {
                 SolrDocument solrDocument = new SolrDocument();
@@ -530,7 +528,7 @@ public class LireRequestHandler extends RequestHandlerBase {
                 solrDocument.setField("width", sdoc.getDocument().get("width"));
                 solrDocument.setField("height", sdoc.getDocument().get("height"));
                 solrDocument.setField("type", sdoc.getDocument().get("type"));
-                solrDocument.setField("score", score);
+                solrDocument.setField("distance", distance);
                 slice.add(solrDocument);
             }
             numFound++;
@@ -557,7 +555,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 
     @Override
     public String getVersion() {
-        return "0.9.5-SNAPSHOT";
+        return "0.9.6-SNAPSHOT";
     }
 
     @Override

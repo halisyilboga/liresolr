@@ -14,20 +14,20 @@ public class MirFlickrImageDataProcessor implements ImageDataProcessor {
     @Override
     public CharSequence getTitle(String filename) {
 //        return filename.replace("G:\\", "").replaceAll("\\\\", "/");
-        return filename.replace("D:\\DataSets\\MirFlickr\\", "").replaceAll("\\\\", "/");
+        return filename.replace("/data/digitalcandy/ml/images", "").replaceAll("\\\\", "/");
     }
 
     @Override
     public CharSequence getIdentifier(String filename) {
 //        return filename.replace("G:\\", "").replaceAll("\\\\", "/");
-        return filename.replace("D:\\DataSets\\MirFlickr\\", "").replaceAll("\\\\", "/");
+        return filename.replace("/data/digitalcandy/ml/images", "").replaceAll("\\\\", "/");
     }
 
     @Override
     public CharSequence getAdditionalFields(String filename) {
         StringBuilder sb = new StringBuilder(1024);
         int fileNumber = Integer.parseInt(filename.substring(filename.lastIndexOf("\\")).replaceAll("[^0-9]", "")) - 1;
-        String tagFileName = "D:\\DataSets\\MirFlickr\\tags_raw\\" + (fileNumber/10000) + "\\" + fileNumber + ".txt";
+        String tagFileName = "/data/digitalcandy/ml/images/tags_raw\\" + (fileNumber/10000) + "\\" + fileNumber + ".txt";
 //        String tagFileName = filename.substring(0, filename.lastIndexOf("\\")) + "\\" + fileNumber + ".txt";
         try {
             sb.append("<field name=\"tags\">");
@@ -35,8 +35,7 @@ public class MirFlickrImageDataProcessor implements ImageDataProcessor {
             FileUtils.readWholeFile(new File(tagFileName), tmp);
             sb.append(tmp.toString().replaceAll("\\s", " "));  // replacing \n\r\t and all those with " "
             sb.append("</field>");
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException e) {            
             return "";
         }
         return sb;

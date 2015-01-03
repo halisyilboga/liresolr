@@ -62,6 +62,8 @@ import org.apache.solr.search.ValueSourceParser;
  * @author Mathias Lux, mathias@juggle.at, 17.09.2013
  */
 public class LireValueSourceParser extends ValueSourceParser {
+    
+    @Override
     public void init(NamedList namedList) {
 
     }

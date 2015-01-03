@@ -94,10 +94,8 @@ public class LireValueSource extends ValueSource {
                 } else {
                     System.err.println("Feature " + field + " is not registered.");
                 }
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
+            } catch (InstantiationException | IllegalAccessException e) {
+                
             }
         }
 
@@ -109,6 +107,7 @@ public class LireValueSource extends ValueSource {
         feature.setByteArrayRepresentation(hist);
     }
 
+    @Override
     public FunctionValues getValues(Map context, AtomicReaderContext readerContext) throws IOException {
         final FieldInfo fieldInfo = readerContext.reader().getFieldInfos().fieldInfo(field);
         if (fieldInfo != null && fieldInfo.getDocValuesType() == FieldInfo.DocValuesType.BINARY) {
@@ -175,6 +174,7 @@ public class LireValueSource extends ValueSource {
                 }
 
 
+                @Override
                 public double doubleVal(int doc) {
                     return maxDistance;
                 }
