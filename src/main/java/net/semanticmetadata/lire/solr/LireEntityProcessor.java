@@ -13,11 +13,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
 
 import static org.apache.solr.handler.dataimport.DataImportHandlerException.SEVERE;
 import static org.apache.solr.handler.dataimport.DataImportHandlerException.wrapAndThrow;
 import static org.apache.solr.handler.dataimport.XPathEntityProcessor.URL;
+import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
 
 /**
  * An entity processor like the one for Tika to support data base imports and
@@ -30,32 +30,25 @@ public class LireEntityProcessor extends EntityProcessorBase {
 
     protected boolean done = false;
     protected LireFeature[] listOfFeatures = new LireFeature[]{
-        new PHOG(),
-        new ColorLayout(),
-        new EdgeHistogram(),
-        new JCD(),
-        new CEDD(),
-        new ScalableColor(),
-        new OpponentHistogram(),
-        new FCTH(),
-        new FuzzyOpponentHistogram(),
-        new JointHistogram()
+        new ColorLayout(), new PHOG(), new EdgeHistogram(), new JCD(), new OpponentHistogram()
     };
-    
-    protected static final HashMap<Class, String> classToPrefix = new HashMap<Class, String>(5);
+    protected static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(5);
     int count = 0;
 
     static {
-        classToPrefix.put(PHOG.class, "ph");
         classToPrefix.put(ColorLayout.class, "cl");
         classToPrefix.put(EdgeHistogram.class, "eh");
+        classToPrefix.put(OpponentHistogram.class, "oh");
+        classToPrefix.put(PHOG.class, "ph");
         classToPrefix.put(JCD.class, "jc");
+        classToPrefix.put(SurfSolrFeature.class, "su");
+
         classToPrefix.put(CEDD.class, "ce");
         classToPrefix.put(ScalableColor.class, "sc");
-        classToPrefix.put(OpponentHistogram.class, "oh");
         classToPrefix.put(FCTH.class, "fc");
         classToPrefix.put(FuzzyOpponentHistogram.class, "fo");
         classToPrefix.put(JointHistogram.class, "jh");
+
     }
 
     @Override
@@ -84,7 +77,8 @@ public class LireEntityProcessor extends EntityProcessorBase {
         try {
             BufferedImage img = ImageIO.read(is);
             row.put("id", context.getResolvedEntityAttribute(URL));
-            for (LireFeature feature : listOfFeatures) {
+            for (int i = 0; i < listOfFeatures.length; i++) {
+                LireFeature feature = listOfFeatures[i];
                 feature.extract(img);
                 String histogramField = classToPrefix.get(feature.getClass()) + "_hi";
                 String hashesField = classToPrefix.get(feature.getClass()) + "_ha";

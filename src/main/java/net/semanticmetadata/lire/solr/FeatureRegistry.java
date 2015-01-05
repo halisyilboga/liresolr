@@ -39,6 +39,7 @@ public class FeatureRegistry {
         codeToClass.put("cl", ColorLayout.class);
         codeToClass.put("eh", EdgeHistogram.class);
         codeToClass.put("jc", JCD.class);
+        codeToClass.put("su", SurfSolrFeature.class);
         // additional global features
         codeToClass.put("ce", CEDD.class);
         codeToClass.put("sc", ScalableColor.class);
@@ -46,7 +47,7 @@ public class FeatureRegistry {
         codeToClass.put("fc", FCTH.class);
         codeToClass.put("fo", FuzzyOpponentHistogram.class);
         codeToClass.put("jh", JointHistogram.class);
-        
+
         codeToClass.put("pc", SPCEDD.class);
         codeToClass.put("ac", AutoColorCorrelogram.class);
         // local feature based histograms.
