@@ -35,7 +35,7 @@ import java.util.*;
 
 public class Sandbox {
 
-    private static HashMap<String, Class> fieldToClass = new HashMap<String, Class>(5);
+    private static HashMap<String, Class> fieldToClass = new HashMap<String, Class>(11);
     private long time = 0;
     private int countRequests = 0;
     private int defaultNumberOfResults = 60;
@@ -734,7 +734,7 @@ public class Sandbox {
         Collections.shuffle(hList);
         BooleanQuery query = new BooleanQuery();
         int numHashes = (int) Math.min(hashes.length, Math.floor(hashes.length * size));
-        if (numHashes < 5) {
+        if (numHashes < 11) {
             numHashes = hashes.length;
         }
         for (int i = 0; i < numHashes; i++) {

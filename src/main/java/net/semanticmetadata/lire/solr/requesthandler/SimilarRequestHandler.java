@@ -55,7 +55,7 @@ public class SimilarRequestHandler extends RequestHandlerBase {
 
     @Override
     public String getVersion() {
-        return "0.9.5-SNAPSHOT";
+        return "0.9.6-SNAPSHOT";
     }
 
     @Override
@@ -71,7 +71,6 @@ public class SimilarRequestHandler extends RequestHandlerBase {
     @Override
     public void init(NamedList args) {
         super.init(args);
-
         // Caching off by default
         httpCaching = false;
         if (args != null) {

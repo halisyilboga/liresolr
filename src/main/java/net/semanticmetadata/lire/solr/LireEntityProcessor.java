@@ -30,9 +30,19 @@ public class LireEntityProcessor extends EntityProcessorBase {
 
     protected boolean done = false;
     protected LireFeature[] listOfFeatures = new LireFeature[]{
-        new ColorLayout(), new PHOG(), new EdgeHistogram(), new JCD(), new OpponentHistogram()
+        new ColorLayout(), 
+        new EdgeHistogram(), 
+        new OpponentHistogram(), 
+        new PHOG(), 
+        new JCD(), 
+        new SurfSolrFeature(), 
+        new CEDD(), 
+        new ScalableColor(), 
+        new FCTH(), 
+        new FuzzyOpponentHistogram(), 
+        new JointHistogram()
     };
-    protected static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(5);
+    protected static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(11);
     int count = 0;
 
     static {
@@ -42,13 +52,11 @@ public class LireEntityProcessor extends EntityProcessorBase {
         classToPrefix.put(PHOG.class, "ph");
         classToPrefix.put(JCD.class, "jc");
         classToPrefix.put(SurfSolrFeature.class, "su");
-
         classToPrefix.put(CEDD.class, "ce");
         classToPrefix.put(ScalableColor.class, "sc");
         classToPrefix.put(FCTH.class, "fc");
         classToPrefix.put(FuzzyOpponentHistogram.class, "fo");
         classToPrefix.put(JointHistogram.class, "jh");
-
     }
 
     @Override
@@ -77,8 +85,7 @@ public class LireEntityProcessor extends EntityProcessorBase {
         try {
             BufferedImage img = ImageIO.read(is);
             row.put("id", context.getResolvedEntityAttribute(URL));
-            for (int i = 0; i < listOfFeatures.length; i++) {
-                LireFeature feature = listOfFeatures[i];
+            for (LireFeature feature : listOfFeatures) {
                 feature.extract(img);
                 String histogramField = classToPrefix.get(feature.getClass()) + "_hi";
                 String hashesField = classToPrefix.get(feature.getClass()) + "_ha";

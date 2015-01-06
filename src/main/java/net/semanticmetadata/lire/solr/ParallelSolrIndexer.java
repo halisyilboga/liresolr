@@ -84,7 +84,7 @@ import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
 public class ParallelSolrIndexer implements Runnable {
 
     //private static final Logger log = LoggerFactory.getLogger(ParallelSolrIndexer.class);
-    private static final HashMap<Class, String> classToPrefix = new HashMap<Class, String>(5);
+    private static final HashMap<Class, String> classToPrefix = new HashMap<Class, String>(11);
     private static boolean force = false;
     private static boolean individualFiles = false;
     private static int numberOfThreads = 4;

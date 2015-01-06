@@ -49,7 +49,7 @@ public class IdentityRequestHandler extends RequestHandlerBase {
 
     @Override
     public String getVersion() {
-        return "0.9.5-SNAPSHOT";
+        return "0.9.6-SNAPSHOT";
     }
 
     @Override
@@ -65,7 +65,6 @@ public class IdentityRequestHandler extends RequestHandlerBase {
     @Override
     public void init(NamedList args) {
         super.init(args);
-
         // Caching off by default
         httpCaching = false;
         if (args != null) {
@@ -177,16 +176,15 @@ public class IdentityRequestHandler extends RequestHandlerBase {
             SimpleResult surfIdentityResult = surfIdentityCheck(image, resultScoreDocs, properties);
             if (surfIdentityResult != null) {
 
-                Float score = surfIdentityResult.getDistance();
-                if (maxScore < score) {
-                    maxScore = score;
+                Float distance = surfIdentityResult.getDistance();
+                if (maxScore < distance) {
+                    maxScore = distance;
                 }
                 if (numFound >= paramStarts && numFound < paramStarts + paramRows) {
                     SolrDocument solrDocument = new SolrDocument();
                     solrDocument.setField("id", surfIdentityResult.getDocument().get("id"));
                     solrDocument.setField("title", surfIdentityResult.getDocument().get("title"));
-                    solrDocument.setField("url", surfIdentityResult.getDocument().get("url"));
-                    solrDocument.setField("score", score);
+                    solrDocument.setField("distance", distance);
                     slice.add(solrDocument);
                 }
                 numFound++;

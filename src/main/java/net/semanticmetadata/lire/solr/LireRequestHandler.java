@@ -31,6 +31,8 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
 
 /**
@@ -44,20 +46,30 @@ import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
  */
 public class LireRequestHandler extends RequestHandlerBase {
 
-    private static final HashMap<String, Class> fieldToClass = new HashMap<>(5);
-    static long time = 0;
-    static int defaultNumberOfResults = 60;
-    static int defaultStartValue = 0;
-    static final String defaultAlgorithmField = "cl_ha";
+    private static final HashMap<String, Class> fieldToClass = new HashMap<>(11);
+    volatile long totalTime = 0;
+    volatile int defaultNumberOfResults = 60;
+    volatile int defaultStartValue = 0;
+    volatile String defaultAlgorithmField = "cl_ha";
     volatile long numErrors;
     volatile long numRequests;
-    volatile long totalTime;
 
     /**
      * number of candidate results retrieved from the index. The higher this
-     * number, the slower, the but more accurate the retrieval will be.
+     * number, the slower, the but more accurate the retrieval will be. 10k is a
+     * good value for starters.
      */
-    private final int candidateResultNumber = 20000;
+    private int numberOfCandidateResults = 40000;
+    private static final int DEFAULT_NUMBER_OF_CANDIDATES = 40000;
+
+    /**
+     * The number of query terms that go along with the TermsFilter search. We
+     * need some to get a score, the less the faster. I put down a minimum of
+     * three in the method, this value gives the percentage of the overall
+     * number used (selected randomly).
+     */
+    private double numberOfQueryTerms = 0.33;
+    private static final double DEFAULT_NUMBER_OF_QUERY_TERMS = 0.33;
 
     static {
         fieldToClass.put("cl_ha", ColorLayout.class);
@@ -65,7 +77,6 @@ public class LireRequestHandler extends RequestHandlerBase {
         fieldToClass.put("oh_ha", OpponentHistogram.class);
         fieldToClass.put("eh_ha", EdgeHistogram.class);
         fieldToClass.put("jc_ha", JCD.class);
-
         fieldToClass.put("su_ha", SurfSolrFeature.class);
         fieldToClass.put("ce_ha", CEDD.class);
         fieldToClass.put("sc_ha", ScalableColor.class);
@@ -73,7 +84,7 @@ public class LireRequestHandler extends RequestHandlerBase {
         fieldToClass.put("fo_ha", FuzzyOpponentHistogram.class);
         fieldToClass.put("jh_ha", JointHistogram.class);
 
-        // one time hash function read ...
+        // one totalTime hash function read ...
         try {
             BitSampling.readHashFunctions();
         } catch (IOException ioe) {
@@ -84,7 +95,6 @@ public class LireRequestHandler extends RequestHandlerBase {
     @Override
     public void init(NamedList args) {
         super.init(args);
-
         // Caching off by default
         httpCaching = false;
         if (args != null) {
@@ -110,6 +120,8 @@ public class LireRequestHandler extends RequestHandlerBase {
     @Override
     public void handleRequestBody(SolrQueryRequest req, SolrQueryResponse rsp) throws Exception {
         SolrParams params = req.getParams();
+        numberOfQueryTerms = req.getParams().getDouble("accuracy", DEFAULT_NUMBER_OF_QUERY_TERMS);
+        numberOfCandidateResults = req.getParams().getInt("candidates", DEFAULT_NUMBER_OF_CANDIDATES);
 
         numRequests++;
         long startTime = System.currentTimeMillis();
@@ -197,10 +209,10 @@ public class LireRequestHandler extends RequestHandlerBase {
             numErrors++;
             rsp.add("Error", "There was an error with your search for the image with the id " + req.getParams().get("id")
                     + ": " + ex.getMessage());
-        } catch (SyntaxError syntaxError) {
-            syntaxError.printStackTrace();
-        } catch (ParseException e) {
-            e.printStackTrace();
+        } catch (ParseException | SyntaxError sex) {            
+            numErrors++;
+            rsp.add("Error", "There was an error with your search for the image with the id " + req.getParams().get("id")
+                    + ": " + sex.getMessage());
         }
     }
 
@@ -241,7 +253,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 
     /**
      * Searches for an image given by an URL. Note that (i) extracting image
-     * features takes time and (ii) not every image is readable by Java.
+     * features takes totalTime and (ii) not every image is readable by Java.
      *
      * @param req
      * @param rsp
@@ -254,10 +266,12 @@ public class LireRequestHandler extends RequestHandlerBase {
         SolrParams params = req.getParams();
         String q = params.get(CommonParams.Q);
         String[] fqs = params.getParams(CommonParams.FQ);
+        
         int paramStarts = defaultStartValue;
         try {
             paramStarts = Integer.parseInt(params.get(CommonParams.START));
         } catch (Exception e) { /* default */ }
+        
         int paramRows = defaultNumberOfResults;
         try {
             paramRows = Integer.parseInt(params.get(CommonParams.ROWS));
@@ -267,20 +281,12 @@ public class LireRequestHandler extends RequestHandlerBase {
         if (params.get("url") != null) {
             paramUrl = params.get("url");
         }
+        
         String paramField = defaultAlgorithmField;
         if (req.getParams().get("field") != null) {
             paramField = req.getParams().get("field");
         }
 
-//        int paramRows = defaultNumberOfResults;
-//        if (params.get("rows") != null) {
-//            paramRows = params.getInt("rows");
-//        }
-//
-//        int paramStarts = defaultStartValue;
-//        if (params.get("start") != null) {
-//            paramStarts = params.getInt("start");
-//        }
         LireFeature feat = null;
         BooleanQuery query = null;
         // wrapping the whole part in the try
@@ -304,8 +310,26 @@ public class LireRequestHandler extends RequestHandlerBase {
                 case "eh_ha":
                     feat = new EdgeHistogram();
                     break;
+                case "su_ha":
+                    feat = new SurfSolrFeature();
+                    break;
+                case "ce_ha":
+                    feat = new CEDD();
+                    break;
+                case "sc_ha":
+                    feat = new ScalableColor();
+                    break;
+                case "fc_ha":
+                    feat = new FCTH();
+                    break;
+                case "fo_ha":
+                    feat = new FuzzyOpponentHistogram();
+                    break;
+                case "jh_ha":
+                    feat = new JointHistogram();
+                    break;
                 default:
-                    feat = new EdgeHistogram();
+                    feat = new PHOG();
                     break;
             }
             feat.extract(img);
@@ -325,50 +349,43 @@ public class LireRequestHandler extends RequestHandlerBase {
     private void handleExtract(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, InstantiationException, IllegalAccessException {
         SolrParams params = req.getParams();
         String paramUrl = params.get("extract");
-        String paramField = defaultAlgorithmField;
+        String paramField = "cl_ha";
         if (req.getParams().get("field") != null) {
             paramField = req.getParams().get("field");
         }
-        int paramRows = defaultNumberOfResults;
-        if (params.get("rows") != null) {
-            paramRows = params.getInt("rows");
-        }
-
+//        int paramRows = defaultNumberOfResults;
+//        if (params.get("rows") != null)
+//            paramRows = params.getInt("rows");
         LireFeature feat = null;
-        // BooleanQuery query = null;
+//        BooleanQuery query = null;
         // wrapping the whole part in the try
         try {
             BufferedImage img = ImageIO.read(new URL(paramUrl).openStream());
             img = ImageUtils.trimWhiteSpace(img);
             // getting the right feature per field:
-            switch (paramField) {
-                case "cl_ha":
-                    feat = new ColorLayout();
-                    break;
-                case "jc_ha":
-                    feat = new JCD();
-                    break;
-                case "ph_ha":
-                    feat = new PHOG();
-                    break;
-                case "oh_ha":
-                    feat = new OpponentHistogram();
-                    break;
-                case "eh_ha":
-                    feat = new EdgeHistogram();
-                    break;
-                default:
-                    feat = new EdgeHistogram();
-                    break;
+            if (paramField == null || FeatureRegistry.getClassForHashField(paramField) == null) // if the feature is not registered.
+            {
+                feat = new EdgeHistogram();
+            } else {
+                feat = (LireFeature) FeatureRegistry.getClassForHashField(paramField).newInstance();
             }
             feat.extract(img);
-            rsp.add("histogram", Base64.encodeBase64String(feat.getByteArrayRepresentation()));
-//            int[] hashes = BitSampling.generateHashes(feat.getDoubleHistogram());
+            SolrDocument doc = new SolrDocument();
+            doc.setField("histogram", Base64.encodeBase64String(feat.getByteArrayRepresentation()));
+            
+            int[] hashes = BitSampling.generateHashes(feat.getDoubleHistogram());
+            ArrayList<String> hashStrings = new ArrayList<String>(hashes.length);
+            for (int i = 0; i < hashes.length; i++) {
+                hashStrings.add(Integer.toHexString(hashes[i]));
+            }
+            Collections.shuffle(hashStrings);
+            doc.setField("hashes", hashStrings);
+            rsp.add("response", doc);
 //            just use 50% of the hashes for search ...
-//            query = createQuery(hashes, paramField, 0.5d);
-        } catch (Exception e) {
+//            query = createTermFilter(hashes, paramField, 0.5d);
+        } catch (IOException | InstantiationException | IllegalAccessException ioex) {
             numErrors++;
-            rsp.add("Error", "Error reading image from URL: " + paramUrl + ": " + e.getMessage());
+            rsp.add("Error", "Error reading image from URL: " + paramUrl + ": " + ioex.getMessage());
         }
         // search if the feature has been extracted.
 //        if (feat != null) doSearch(rsp, req.getSearcher(), paramField, paramRows, query, feat);
@@ -459,15 +476,15 @@ public class LireRequestHandler extends RequestHandlerBase {
         int maximumHits = paramStarts + paramRows;
         // temp feature instance
         LireFeature tmpFeature = queryFeature.getClass().newInstance();
-        // Taking the time of search for statistical purposes.
-        time = System.currentTimeMillis();
+        // Taking the totalTime of search for statistical purposes.
+        totalTime = System.currentTimeMillis();
         SolrIndexSearcher searcher = req.getSearcher();
-        TopDocs docs = searcher.search(query, candidateResultNumber);
-        time = System.currentTimeMillis() - time;
+        TopDocs docs = searcher.search(query, numberOfCandidateResults);
+        totalTime = System.currentTimeMillis() - totalTime;
         rsp.add("RawDocsCount", docs.scoreDocs.length + "");
-        rsp.add("RawDocsSearchTime", time + "");
+        rsp.add("RawDocsSearchTime", totalTime + "");
         // re-rank
-        time = System.currentTimeMillis();
+        totalTime = System.currentTimeMillis();
         TreeSet<SimpleResult> resultScoreDocs = new TreeSet<>();
         float maxDistance = -1f;
         float tmpScore;
@@ -497,8 +514,8 @@ public class LireRequestHandler extends RequestHandlerBase {
             }
         }
 //        //LOG.info("** Creating response.");
-        time = System.currentTimeMillis() - time;
-        rsp.add("ReRankSearchTime", time + "");
+        totalTime = System.currentTimeMillis() - totalTime;
+        rsp.add("ReRankSearchTime", totalTime + "");
 //        LinkedList list = new LinkedList();
 //        for (Iterator<SimpleResult> it = resultScoreDocs.iterator(); it.hasNext();) {
 //            SimpleResult result = it.next();
@@ -516,19 +533,18 @@ public class LireRequestHandler extends RequestHandlerBase {
         //LinkedList list = new LinkedList();
         List<SolrDocument> slice = new ArrayList<SolrDocument>();
 
-        for (Iterator<SimpleResult> it = resultScoreDocs.iterator(); it.hasNext();) {
-            SimpleResult sdoc = it.next();
-
-            Float score = (Float) sdoc.getDistance();
-            if (maxScore < score) {
-                maxScore = score;
+        for (SimpleResult sdoc : resultScoreDocs) {
+            Float distance = (Float) sdoc.getDistance();
+            if (maxScore < distance) {
+                maxScore = distance;
             }
             if (numFound >= paramStarts && numFound < paramStarts + paramRows) {
                 SolrDocument solrDocument = new SolrDocument();
                 solrDocument.setField("id", sdoc.getDocument().get("id"));
                 solrDocument.setField("title", sdoc.getDocument().get("title"));
-                solrDocument.setField("url", sdoc.getDocument().get("url"));
-                solrDocument.setField("score", score);
+                solrDocument.setField("width", sdoc.getDocument().get("width"));
+                solrDocument.setField("height", sdoc.getDocument().get("height"));
+                solrDocument.setField("distance", distance);
                 slice.add(solrDocument);
             }
             numFound++;
@@ -547,8 +563,8 @@ public class LireRequestHandler extends RequestHandlerBase {
             throws IOException, ParseException, SyntaxError {
         if (fqs != null && fqs.length > 0) {
             BooleanQuery fquery = new BooleanQuery();
-            for (int i = 0; i < fqs.length; i++) {
-                QParser parser = QParser.getParser(fqs[i], null, req);
+            for (String fq : fqs) {
+                QParser parser = QParser.getParser(fq, null, req);
                 fquery.add(parser.getQuery(), BooleanClause.Occur.MUST);
             }
             return new CachingWrapperFilter(new QueryWrapperFilter(fquery));
@@ -568,7 +584,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 
     @Override
     public String getVersion() {
-        return "0.9.5-SNAPSHOT";
+        return "0.9.6-SNAPSHOT";
     }
 
     @Override
@@ -588,7 +604,7 @@ public class LireRequestHandler extends RequestHandlerBase {
         Collections.shuffle(hList);
         BooleanQuery query = new BooleanQuery();
         int numHashes = (int) Math.min(hashes.length, Math.floor(hashes.length * size));
-        if (numHashes < 5) {
+        if (numHashes < 11) {
             numHashes = hashes.length;
         }
         for (int i = 0; i < numHashes; i++) {
