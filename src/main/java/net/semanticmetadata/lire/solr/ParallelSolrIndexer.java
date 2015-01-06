@@ -107,7 +107,7 @@ public class ParallelSolrIndexer implements Runnable {
 
     File fileList = null;
     File outFile = null;
-    private int monitoringInterval = 10;
+    private final int monitoringInterval = 10;
     private int maxSideLength = 1024;
     private boolean isPreprocessing = true;
     private Class imageDataProcessor = null;
@@ -138,7 +138,7 @@ public class ParallelSolrIndexer implements Runnable {
                 if ((i + 1) < args.length) {
                     e.setFileList(new File(args[i + 1]));
                 } else {
-                    System.err.println("Could not set out file.");
+                    System.out.println("Could not set out file.");
                     printHelp();
                 }
             } else if (arg.startsWith("-o")) {
@@ -171,7 +171,7 @@ public class ParallelSolrIndexer implements Runnable {
                             e.setImageDataProcessor(imageDataProcessorClass);
                         }
                     } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e1) {
-                        System.err.println("Did not find imageProcessor class: " + e1.getMessage());
+                        System.out.println("Did not find imageProcessor class: " + e1.getMessage());
                         printHelp();
                         System.exit(0);
                     }
@@ -191,7 +191,7 @@ public class ParallelSolrIndexer implements Runnable {
                     try {
                         ParallelSolrIndexer.numberOfThreads = Integer.parseInt(args[i + 1]);
                     } catch (Exception e2) {
-                        System.err.println("Could not set number of threads to \"" + args[i + 1] + "\".");
+                        System.out.println("Could not set number of threads to \"" + args[i + 1] + "\".");
                     }
                 } else {
                     printHelp();
@@ -285,7 +285,7 @@ public class ParallelSolrIndexer implements Runnable {
 //                configured = false;
 //            }
         } else if (outFile.exists() && !force) {
-            System.err.println(outFile.getName() + " already exists. Please delete or choose another outfile.");
+            System.out.println(outFile.getName() + " already exists. Please delete or choose another outfile.");
             configured = false;
         }
         return configured;
@@ -295,7 +295,7 @@ public class ParallelSolrIndexer implements Runnable {
     public void run() {
         // check:
         if (fileList == null || !fileList.exists()) {
-            System.err.println("No text file with a list of images given.");
+            System.out.println("No text file with a list of images given.");
             return;
         }
         try {
@@ -406,7 +406,7 @@ public class ParallelSolrIndexer implements Runnable {
                         String path = next.getCanonicalPath();
                         images.put(new WorkItem(path, buffer));
                     } catch (IOException | InterruptedException e) {
-                        System.err.println("Could not read image " + file + ": " + e.getMessage());
+                        System.out.println("Could not read image " + file + ": " + e.getMessage());
                     }
                 }
                 for (int i = 0; i < numberOfThreads * 2; i++) {
@@ -492,7 +492,7 @@ public class ParallelSolrIndexer implements Runnable {
                                 idp = (ImageDataProcessor) imageDataProcessor.newInstance();
                             }
                         } catch (InstantiationException | IllegalAccessException e) {
-                            System.err.println("Could not instantiate ImageDataProcessor!");
+                            System.out.println("Could not instantiate ImageDataProcessor!");
                         }
                         // --------< creating doc >-------------------------
                         sb.append("<doc>");
@@ -558,7 +558,7 @@ public class ParallelSolrIndexer implements Runnable {
 //                        }
 //                    }
                 } catch (InterruptedException | IOException e) {
-                    System.err.println("Error processing file " + tmp.getFileName());                    
+                    System.out.println("Error processing file " + tmp.getFileName());                    
                 }
             }
         }

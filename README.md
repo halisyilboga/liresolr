@@ -94,64 +94,164 @@ Installation
 
 First run the dist task to create a single jar. This should be integrated in the Solr class-path. Then add
 the new request handler has to be registered in the solrconfig.xml file:
+solrconfig.xml
+---
+	  <valueSourceParser name="lirefunc" class="net.semanticmetadata.lire.solr.LireValueSourceParser" />
+	  <requestHandler name="/lireq" class="net.semanticmetadata.lire.solr.LireRequestHandler">
+	     <lst name="defaults">
+	       <str name="echoParams">explicit</str>
+	       <str name="wt">json</str>
+	       <str name="indent">true</str>
+	       <str name="df">text</str>
+	     </lst>
+	   </requestHandler>
+	   
+	   <requestHandler name="/dataimport" class="solr.DataImportHandler">
+	     <lst name="defaults">
+	       <str name="config">lire-data-config.xml</str>
+	     </lst>
+	   </requestHandler>
+	  
+	  
+	
+	  <requestHandler class="net.semanticmetadata.lire.solr.requesthandler.IdentityRequestHandler" name="/lireId">
+	     <lst name="defaults">
+	       <str name="echoParams">explicit</str>
+	       <str name="wt">json</str>
+	       <str name="indent">true</str>
+	       <str name="df">text</str>
+	     </lst>
+	  </requestHandler>
+	  
+	  <requestHandler class="net.semanticmetadata.lire.solr.requesthandler.SimilarRequestHandler" name="/lireSim">
+	     <lst name="defaults">
+	       <str name="echoParams">explicit</str>
+	       <str name="wt">json</str>
+	       <str name="indent">true</str>
+	       <str name="df">text</str>
+	     </lst>
+	  </requestHandler>
+	  <valueSourceParser class="net.semanticmetadata.lire.solr.LireValueSourceParser" name="lirefunc"/>
 
-     <requestHandler name="/lireq" class="net.semanticmetadata.lire.solr.LireRequestHandler">
-        <lst name="defaults">
-          <str name="echoParams">explicit</str>
-          <str name="wt">json</str>
-          <str name="indent">true</str>
-        </lst>
-     </requestHandler>
+
 
 Use of the request handler is detailed above.
 
+schema.xml
+---
 You'll also need the respective fields in the schema.xml file:
 
-    <fields>
+	<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+    <schema name="media" version="1.5">
         <!-- file path for ID -->
         <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" />
         <!-- the sole file name -->
         <field name="title" type="text_general" indexed="true" stored="true" multiValued="true"/>
-        <!-- Edge Histogram -->
-        <field indexed="true" name="eh_ha" required="false" stored="false" type="text_ws"/>
-        <field indexed="false" name="eh_hi" required="false" stored="true" type="binaryDV"/>
-        <!-- ColorLayout -->
-        <field indexed="true" name="cl_ha" required="false" stored="false" type="text_ws"/>
-        <field indexed="false" name="cl_hi" required="false" stored="true" type="binaryDV"/>
-        <!-- PHOG -->
-        <field indexed="true" name="ph_ha" required="false" stored="false" type="text_ws"/>
-        <field indexed="false" name="ph_hi" required="false" stored="true" type="binaryDV"/>
-        <!-- JCD -->
-        <field indexed="true" name="jc_ha" required="false" stored="false" type="text_ws"/>
-        <field indexed="false" name="jc_hi" required="false" stored="true" type="binaryDV"/>
-        <!-- OpponentHistogram -->
-        <field indexed="true" name="oh_ha" required="false" stored="false" type="text_ws"/>
-        <field indexed="false" name="oh_hi" required="false" stored="true" type="binaryDV"/>
-        <!-- CEDD -->
-        <field indexed="true" name="ce_ha" required="false" stored="false" type="text_ws"/>
-        <field indexed="false" name="ce_hi" required="false" stored="true" type="binaryDV"/>
-        <!-- ScalableColor -->
-        <field indexed="true" name="sc_ha" required="false" stored="false" type="text_ws"/>
-        <field indexed="false" name="sc_hi" required="false" stored="true" type="binaryDV"/>
-        <!-- SurfSolrFeature -->
-        <field indexed="true" name="su_ha" required="false" stored="false" type="text_ws"/>
-        <field indexed="false" name="su_hi" required="false" stored="true" type="binaryDV"/>
-        <!-- FCTH -->
-        <field indexed="true" name="fc_ha" required="false" stored="false" type="text_ws"/>
-        <field indexed="false" name="fc_hi" required="false" stored="true" type="binaryDV"/>
-        <!-- FuzzyOpponentHistogram -->
-        <field indexed="true" name="fo_ha" required="false" stored="false" type="text_ws"/>
-        <field indexed="false" name="fo_hi" required="false" stored="true" type="binaryDV"/>
-        <!-- JointHistogram -->
-        <field indexed="true" name="jh_ha" required="false" stored="false" type="text_ws"/>
-        <field indexed="false" name="jh_hi" required="false" stored="true" type="binaryDV"/>
+		
+		<!-- type declaration -->
+		<fieldtype class="net.semanticmetadata.lire.solr.BinaryDocValuesField" name="binaryDV"/>
+	   	
+	   	<!-- Edge Histogram -->
+		<field indexed="true" name="eh_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="eh_hi" required="false" stored="true" type="binaryDV"/>
+		
+		<!-- ColorLayout -->
+		<field indexed="true" name="cl_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="cl_hi" required="false" stored="true" type="binaryDV"/>
+		
+		<!-- PHOG -->
+		<field indexed="true" name="ph_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="ph_hi" required="false" stored="true" type="binaryDV"/>
+		
+		<!-- JCD -->
+		<field indexed="true" name="jc_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="jc_hi" required="false" stored="true" type="binaryDV"/>
+		
+		<!-- OpponentHistogram -->
+		<field indexed="true" name="oh_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="oh_hi" required="false" stored="true" type="binaryDV"/>
+	
+		<!-- CEDD -->
+		<field indexed="true" name="ce_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="ce_hi" required="false" stored="true" type="binaryDV"/>
+	
+		<!-- ScalableColor -->
+		<field indexed="true" name="sc_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="sc_hi" required="false" stored="true" type="binaryDV"/>
+		  	
+		<!-- SurfSolrFeature -->		  	
+		<field indexed="true" name="su_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="su_hi" required="false" stored="true" type="binaryDV"/>
+		  	
+		<!-- FCTH -->		  	
+		<field indexed="true" name="fc_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="fc_hi" required="false" stored="true" type="binaryDV"/>
+	      
+		<!-- FuzzyOpponentHistogram -->	      
+		<field indexed="true" name="fo_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="fo_hi" required="false" stored="true" type="binaryDV"/>
+	      
+	    <!-- JointHistogram -->  
+		<field indexed="true" name="jh_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="jh_hi" required="false" stored="true" type="binaryDV"/>
+	      
+		<!-- additional fields for facet -->	  	  	<field indexed="true" name="width" stored="true" type="int"/>
+		<field indexed="true" name="height" stored="true" type="int"/>
+
         <!-- Needed for SOLR -->
         <field name="_version_" type="long" indexed="true" stored="true"/>
-    </fields>
+    </schema>
+
 
 Do not forget to add the custom field at the very same file:
 
     <fieldtype name="binaryDV" class="net.semanticmetadata.lire.solr.BinaryDocValuesField"/>
+
+On the end you'll have to add configuration file liresolr.properties to the config directory of
+your solr core (to the same directory where is solrconfig.xml).
+
+liresolr.properties
+---
+
+	# It defines how many images will be obtained from solr and then they will be compared
+	# with the queried image.
+	# Visual Words
+	numVisualWordsImages = 30
+	# Color Layout
+	numColorLayoutImages = 25000
+	# It defines how many images will be obtained from solr at similar searching (/lireSim)
+	numColorLayoutSimImages = 10
+	numSurfSimImages = 30
+	# Count of images returned by /lireSim handler:
+	numSimilarImages = 30
+	# It defines if system should resize queried image. Parameter defines shorter side of the image.
+	# You can use value 0 for no resize.
+	resizeQueryImage = 400
+	# It defines treshold of Color Layout method. Images, which have the distance less than the
+	# threshold, will be marked as potentional identical images to the queried image.
+	thresholdCLIdentity1 = 7.0
+	# It defines the second level of threshold. If it exists exactly one image, which has
+	# distance less than first threshold and it has also distance less than the second
+	# threshold, system says, that this image is identical to the queried image.
+	thresholdCLIdentity2 = 5.0
+	# It defines threshold of the SURF method. Images which have distance greater or equals
+	# to this value will be removed from a list of candidates to the identical image.
+	thresholdSUIdentity = 0.9
+	solrCoreUrl = http://localhost:8983/solr/media_shard1_replica1/
+	solrClusterPath = /Users/ferdous/projects/digitalcandy/fusion/solr/media_shard1_replica1/data/
+
+
+
+Then the function lirefunc(arg1,arg2) is available for function queries. Two arguments are necessary and are defined as:
+
+-  Feature to be used for computing the distance between result and reference image. Possible values are {cl, ph, eh, jc}
+-  Actual Base64 encoded feature vector of the reference image. It can be obtained by calling LireFeature.getByteRepresentation() and by Base64 encoding the resulting byte[] data.
+
+Examples:
+
+-  [solrurl]/select?q=*:*&fl=id,lirefunc(cl,"FQY5DhMYDg...AQEBA%3D") – adding the distance to the reference image to the results
+-  [solrurl]/select?q=*:*&sort=lirefunc(cl,"FQY5DhMYDg...AQEBA%3D")+asc – sorting the results based on the distance to the reference image
+
 
 There is also a sort function based on LIRE. The function parser needs to be added to the
 solarconfig.xml file like this:
@@ -225,9 +325,9 @@ OUTFILE
 -------
 The outfile has to be send to the Solr server. Assuming the Solr server is local you may use
 
-    curl.exe http://localhost:8983/solr/lire/update -H "Content-Type: text/xml" --data-binary "<delete><query>*:*</query></delete>"
-    curl.exe http://localhost:8983/solr/lire/update -H "Content-Type: text/xml" --data-binary @outfile.xml
-    curl.exe http://localhost:8983/solr/lire/update -H "Content-Type: text/xml" --data-binary "<commit/>"
+    curl.exe http://localhost:8983/solr/collection1/update -H "Content-Type: text/xml" --data-binary "<delete><query>*:*</query></delete>"
+    curl.exe http://localhost:8983/solr/collection1/update -H "Content-Type: text/xml" --data-binary @outfile.xml
+    curl.exe http://localhost:8983/solr/collection1/update -H "Content-Type: text/xml" --data-binary "<commit/>"
 
 You need to commit you changes! If your outfile exceeds 500MB, curl
 might complain. Then use split to cut it into pieces and repair the
@@ -236,46 +336,50 @@ root tags (<add> and </add>)
 LireEntityProcessor
 ===================
 
-Another way is to use the LireEntityProcessor. Then you have to reference the solr-data-config.xml file in the
+Another way is to use the LireEntityProcessor. Then you have to reference the lire-data-config.xml file in the
 solrconfig.xml, and then give the configuration for the EntityProcessor like this:
 
-    <dataConfig>
-        <dataSource name ="bin" type="BinFileDataSource" />
-        <document>
-            <entity name="f"
-                    processor="FileListEntityProcessor"
-                    transformer="TemplateTransformer"
-                    baseDir="/data/dynamicguy/ml/images"
-                    fileName=".*jpg"
-                    recursive="true"
-                    rootEntity="false" dataSource="null" onError="skip">
-                <entity name="lire-test" processor="net.semanticmetadata.lire.solr.LireEntityProcessor" url="${f.fileAbsolutePath}" dataSource="bin"  onError="skip">
-                    <field column="id"/>
-                    <field column="cl_ha"/>
-                    <field column="cl_hi"/>
-                    <field column="ph_ha"/>
-                    <field column="ph_hi"/>
-                    <field column="oh_ha"/>
-                    <field column="oh_hi"/>
-                    <field column="jc_ha"/>
-                    <field column="jc_hi"/>
-                    <field column="eh_ha"/>
-                    <field column="eh_hi"/>
-                    <field column="ce_ha"/>
-                    <field column="ce_hi"/>
-                    <field column="sc_ha"/>
-                    <field column="sc_hi"/>
-                    <field column="su_ha"/>
-                    <field column="su_hi"/>
-                    <field column="fc_ha"/>
-                    <field column="fc_hi"/>
-                    <field column="fo_ha"/>
-                    <field column="fo_hi"/>
-                    <field column="jh_ha"/>
-                    <field column="jh_hi"/>
-                </entity>
-            </entity>
-        </document>
-    </dataConfig>
+	<dataConfig>
+	    <dataSource name ="bin" type="BinFileDataSource" />
+	    <document>
+	        <entity name="f"
+	                processor="FileListEntityProcessor"
+	                transformer="TemplateTransformer"
+	                baseDir="/data/digitalcandy/ml/images/"
+	                fileName=".*jpg"
+	                recursive="true"
+	                rootEntity="false" dataSource="null" onError="skip">
+	            <entity name="lire-test" processor="net.semanticmetadata.lire.solr.LireEntityProcessor" url="${f.fileAbsolutePath}" dataSource="bin"  onError="skip">
+	                <field column="id"/>
+	                <field column="cl_ha"/>
+	                <field column="cl_hi"/>
+	                <field column="ph_ha"/>
+	                <field column="ph_hi"/>
+	                <field column="oh_ha"/>
+	                <field column="oh_hi"/>
+	                <field column="jc_ha"/>
+	                <field column="jc_hi"/>
+	                <field column="eh_ha"/>
+	                <field column="eh_hi"/>
+	                <field column="ce_ha"/>
+	                <field column="ce_hi"/>
+	                <field column="sc_ha"/>
+	                <field column="sc_hi"/>
+	                <field column="su_ha"/>
+	                <field column="su_hi"/>
+	                <field column="fc_ha"/>
+	                <field column="fc_hi"/>
+	                <field column="fo_ha"/>
+	                <field column="fo_hi"/>
+	                <field column="jh_ha"/>
+	                <field column="jh_hi"/>
+	            </entity>
+	        </entity>
+	    </document>
+	</dataConfig>
 
-*Mathias Lux, 2014-12-18*
+
+***Mathias Lux, 2014-12-18***
+___
+***Nurul Ferdous - @dynamicguy, 2015-01-07***
+___

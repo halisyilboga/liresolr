@@ -5,6 +5,7 @@ function reWriteImageUrl(imgUrlOriginal) {
 function getCBIRLinks(myID) {
     result = "";
     result += "lr: ";
+    result += "<a href=\"javascript:search('" + myID + "', 'su_ha');\">su</a>, ";
     result += "<a href=\"javascript:search('" + myID + "', 'cl_ha');\">cl</a>, ";
     result += "<a href=\"javascript:search('" + myID + "', 'ce_ha');\">ce</a>, ";
     result += "<a href=\"javascript:search('" + myID + "', 'eh_ha');\">eh</a>, ";
@@ -15,15 +16,16 @@ function getCBIRLinks(myID) {
     result += "<a href=\"javascript:search('" + myID + "', 'fc_ha');\">fc</a>, ";
     result += "<a href=\"javascript:search('" + myID + "', 'jh_ha');\">jh</a>";
     result += "<br>sr: ";
-    result += "<a href=\"javascript:hashSearch('cl','" + imageUrl + "');\">cl</a>, "
-    result += "<a href=\"javascript:hashSearch('ce','" + imageUrl + "');\">ce</a>, "
-    result += "<a href=\"javascript:hashSearch('eh','" + imageUrl + "');\">eh</a>, "
-    result += "<a href=\"javascript:hashSearch('jc','" + imageUrl + "');\">jc</a>, "
-    result += "<a href=\"javascript:hashSearch('ph','" + imageUrl + "');\">ph</a>, "
-    result += "<a href=\"javascript:hashSearch('sc','" + imageUrl + "');\">sc</a>, "
-    result += "<a href=\"javascript:hashSearch('fo','" + imageUrl + "');\">fo</a>, "
-    result += "<a href=\"javascript:hashSearch('fc','" + imageUrl + "');\">fc</a>, "
-    result += "<a href=\"javascript:hashSearch('jh','" + imageUrl + "');\">jh</a>"
+    result += "<a href=\"javascript:hashSearch('su','" + imageUrl + "');\">su</a>, ";
+    result += "<a href=\"javascript:hashSearch('cl','" + imageUrl + "');\">cl</a>, ";
+    result += "<a href=\"javascript:hashSearch('ce','" + imageUrl + "');\">ce</a>, ";
+    result += "<a href=\"javascript:hashSearch('eh','" + imageUrl + "');\">eh</a>, ";
+    result += "<a href=\"javascript:hashSearch('jc','" + imageUrl + "');\">jc</a>, ";
+    result += "<a href=\"javascript:hashSearch('ph','" + imageUrl + "');\">ph</a>, ";
+    result += "<a href=\"javascript:hashSearch('sc','" + imageUrl + "');\">sc</a>, ";
+    result += "<a href=\"javascript:hashSearch('fo','" + imageUrl + "');\">fo</a>, ";
+    result += "<a href=\"javascript:hashSearch('fc','" + imageUrl + "');\">fc</a>, ";
+    result += "<a href=\"javascript:hashSearch('jh','" + imageUrl + "');\">jh</a>";
 
     return result; // + "</br>";
 }
@@ -103,7 +105,7 @@ $(document).ready(function () {
     // get JSON-formatted data from the server
     $("#perf").html("Please stand by .... <img src=\"img/loader-light.gif\"/>");
 
-    $.ajax("http://localhost:8983/solr/media_shard1_replica1/lireq?field=sc_ha&url=http://localhost/images/data/digitalcandy/ml/images/20.jpg", {
+    $.ajax("http://localhost:8983/solr/media_shard1_replica1/lireq?rows=30&url=http://localhost/images/data/digitalcandy/ml/images/sunflower/image_0011.jpg&field=ph_ha&accuracy=0.7&candidates=32010", {
         dataType: 'jsonp',
         'jsonp': 'json.wrf',
         'wt': 'json',
@@ -197,7 +199,7 @@ function hashSearch(field, url) {
                 for (var i = 0; i < Math.max(5, numHashes); i++) {
                     hashString += myResult.response.hashes[i] + " ";
                 }
-                queryString = "http://localhost:8983/solr/media_shard1_replica1/select?wt=json&q=id:*&fq=" + field + "_ha:(" + hashString.trim() + ")&rows=60&fl=*,score";
+                queryString = "http://localhost:8983/solr/media_shard1_replica1/select?start=0&wt=json&q=id:*&fq=" + field + "_ha:(" + hashString.trim() + ")&rows=30";
                 if ($('input[name="radio-v-1"]:checked').val() === "boost") {
                     queryString = queryString + "&defType=edismax&boost=div(recip(lirefunc(" + encodeURIComponent(field + ",\"" + myResult.response.histogram + "\"") + "),1,100,100),query($q))"; // boost
                     console.log("Using boost");
@@ -318,11 +320,11 @@ function searchUrl(field) {
         'wt': 'json',
         success: function (myResult) {
             $("#perf").html("Index search time: " + myResult.responseHeader.QTime + " ms (query " + myResult.RawDocsSearchTime + " ms, rank " + myResult.ReRankSearchTime + " ms)");
-            console.log(myResult);
+//            console.log(myResult);
             var last = $("#results");
             for (var i = 0; i < myResult.response.docs.length; i++) {
                 myID = myResult.response.docs[i].id.toString();
-                console.log(myResult.response.docs[i]);
+//                console.log(myResult.response.docs[i]);
                 imageUrl = reWriteImageUrl(myID);
                 recent = $("<div class=\"imgCont\"><img class=\"lireimg\" src=\"" + imageUrl + "\" />"
                         + "<div class=\"searchLink\">"
