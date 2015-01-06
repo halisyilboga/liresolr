@@ -34,7 +34,7 @@ function tagSearchDo() {
     $(".imgCont").remove();
     $(".imgContLarge").remove();
     $("#perf").html("Please stand by .... <img src=\"img/loader-light.gif\"/>");
-    queryString = "http://localhost:8983/solr/media_shard1_replica1/select?wt=json&q=" + $('#tagsearch').val() + "&wt=json&rows=60";
+    queryString = "http://localhost:8983/solr/media_shard1_replica1/select?q=" + $('#tagsearch').val() + "&rows=60";
     console.log($('input[name="radio-v-1"]:checked').val());
     if ($('#sorthist').val()) {
         if ($('input[name="radio-v-1"]:checked').val() === "boost") {
@@ -67,7 +67,7 @@ function tagSearchDo() {
                     tags = tags.substring(0, 57) + "...";
                 recent = $("<div class=\"imgContLarge\"><img class=\"lireimg\" src=\"" + imageUrl + "\" title=\"" + myResult.response.docs[i].tags[0].toString() + "\"/>"
                         + "<div align=\"center\" class=\"searchLink\">"
-                         + "d="+myResult.response.docs[i].score+"<br/>"
+                         + "d="+myResult.response.docs[i].distance+"<br/>"
                         + "<a href=\"javascript:search('" + myID + "', 'oh_ha');\">OH</a>, "
                         + "CBIR: " + getCBIRLinks(myID)
                         + "<br/>sort: "
@@ -103,7 +103,7 @@ $(document).ready(function () {
     // get JSON-formatted data from the server
     $("#perf").html("Please stand by .... <img src=\"img/loader-light.gif\"/>");
 
-    $.ajax("http://localhost:8983/solr/media_shard1_replica1/lireq?field=sc_ha&wt=json&url=http://pbs.twimg.com/media/BoiSfsaIIAAQp-F.jpg", {
+    $.ajax("http://localhost:8983/solr/media_shard1_replica1/lireq?field=sc_ha&url=http://localhost/images/data/digitalcandy/ml/images/20.jpg", {
         dataType: 'jsonp',
         'jsonp': 'json.wrf',
         'wt': 'json',
@@ -129,7 +129,7 @@ $(document).ready(function () {
 });
 
 function extract(field, url) {
-    serverUrl = "http://localhost:8983/solr/media_shard1_replica1/lireq?wt=json&extract=" + url + "&field=" + field + "_ha";
+    serverUrl = "http://localhost:8983/solr/media_shard1_replica1/lireq?extract=" + url + "&field=" + field + "_ha";
     console.log(serverUrl);
     $.ajax(serverUrl, {
         dataType: 'jsonp',
@@ -174,7 +174,7 @@ function getRange(field) {
 }
 
 function hashSearch(field, url) {
-    serverUrl = "http://localhost:8983/solr/media_shard1_replica1/lireq?wt=json&extract=" + url + "&field=" + field + "_ha";
+    serverUrl = "http://localhost:8983/solr/media_shard1_replica1/lireq?extract=" + url + "&field=" + field + "_ha";
     console.log("Hash based search" + serverUrl);
     $(".imgCont").remove();
     $(".imgContLarge").remove();
@@ -197,7 +197,7 @@ function hashSearch(field, url) {
                 for (var i = 0; i < Math.max(5, numHashes); i++) {
                     hashString += myResult.response.hashes[i] + " ";
                 }
-                queryString = "http://localhost:8983/solr/media_shard1_replica1/select?wt=json&q=id:*&fq=" + field + "_ha:(" + hashString.trim() + ")&wt=json&rows=60&fl=*,score";
+                queryString = "http://localhost:8983/solr/media_shard1_replica1/select?wt=json&q=id:*&fq=" + field + "_ha:(" + hashString.trim() + ")&rows=60&fl=*,score";
                 if ($('input[name="radio-v-1"]:checked').val() === "boost") {
                     queryString = queryString + "&defType=edismax&boost=div(recip(lirefunc(" + encodeURIComponent(field + ",\"" + myResult.response.histogram + "\"") + "),1,100,100),query($q))"; // boost
                     console.log("Using boost");
@@ -226,7 +226,7 @@ function hashSearch(field, url) {
                                 imageUrl = reWriteImageUrl(myID);
                                 recent = $("<div class=\"imgCont\"><img class=\"lireimg\" src=\"" + imageUrl + "\" />"
                                         + "<div class=\"searchLink\">"
-                                         + "score="+myResult2.response.docs[i].score+"<br/>"
+                                         + "score="+myResult2.response.docs[i].distance+"<br/>"
                                         + getCBIRLinks(myID)
                                         + "</div></div>");
                                 recent.insertAfter(last);
@@ -261,7 +261,7 @@ function search(idString, field) {
     $(".imgContLarge").remove();
     $("#perf").html("Please stand by .... <img src=\"img/loader-light.gif\"/>");
     $("#results").html("Results for query id \"" + idString + "\"");
-    serverUrl = "http://localhost:8983/solr/media_shard1_replica1/lireq?wt=json&rows=30&id=" + idString + "&field=" + field;
+    serverUrl = "http://localhost:8983/solr/media_shard1_replica1/lireq?rows=30&id=" + idString + "&field=" + field;
     if ($("#slider-1").val())
         serverUrl += "&accuracy=" + $("#slider-1").val();
     if ($("#slider-can").val())
@@ -283,7 +283,7 @@ function search(idString, field) {
                 imageUrl = reWriteImageUrl(myID);
                 recent = $("<div class=\"imgCont\"><img class=\"lireimg\" src=\"" + imageUrl + "\" />"
                         + "<div class=\"searchLink\">"
-                        + "score=" + myResult.response.docs[i].score + "<br/>"
+                        + "score=" + myResult.response.docs[i].distance + "<br/>"
                         + getCBIRLinks(myID)
                         + "</div></div>");
                 recent.insertAfter(last);
@@ -305,7 +305,7 @@ function searchUrl(field) {
     $("#perf").html("Please stand by .... <img src=\"img/loader-light.gif\"/>");
     $("#results").html("Results for query \"" + $("#urlq").val().substring(0, 12) + "...\"");
     // get all the new data from the server ...
-    serverUrl = "http://localhost:8983/solr/media_shard1_replica1/lireq?wt=json&rows=30&url=" + $("#urlq").val() + "&field=" + field;
+    serverUrl = "http://localhost:8983/solr/media_shard1_replica1/lireq?rows=30&url=" + $("#urlq").val() + "&field=" + field;
     if ($("#slider-1").val())
         serverUrl += "&accuracy=" + $("#slider-1").val();
     if ($("#slider-can").val())
@@ -326,7 +326,7 @@ function searchUrl(field) {
                 imageUrl = reWriteImageUrl(myID);
                 recent = $("<div class=\"imgCont\"><img class=\"lireimg\" src=\"" + imageUrl + "\" />"
                         + "<div class=\"searchLink\">"
-                        + "score=" + myResult.response.docs[i].score + "<br/>"
+                        + "score=" + myResult.response.docs[i].distance + "<br/>"
                         + getCBIRLinks(myID)
                         + "</div></div>");
                 recent.insertAfter(last);

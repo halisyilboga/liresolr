@@ -87,12 +87,21 @@
 
 
         <div class="ui-field-contain">
-            <label for="urlq">Search by image URL:</label><input type="text" data-mini="true" id="urlq" name="urlq"
-                                                                 placeholder="http://..."/>
-            <a href="javascript:searchUrl('cl_ha');">CL</a>
-            <a href="javascript:searchUrl('ce_ha');">CEDD</a>
-            <a href="javascript:searchUrl('eh_ha');">EH</a>
-        </div>
+            <p>
+            <label for="urlq">Search by image URL:</label>
+            <div class="ui-input-text ui-body-inherit ui-corner-all ui-mini ui-shadow-inset">
+                <input type="text" data-mini="true" id="urlq" name="urlq" placeholder="http://...">
+            </div>
+            </p>
+            <p>
+                <a href="javascript:searchUrl('cl_ha');" data-role="button" data-mini="true" data-inline="true" class="ui-link ui-btn ui-btn-inline ui-shadow ui-corner-all ui-mini" role="button">ColorLayout</a>
+                <a href="javascript:searchUrl('ce_ha');" data-role="button" data-mini="true" data-inline="true" class="ui-link ui-btn ui-btn-inline ui-shadow ui-corner-all ui-mini" role="button">CEDD</a>
+                <a href="javascript:searchUrl('eh_ha');" data-role="button" data-mini="true" data-inline="true" class="ui-link ui-btn ui-btn-inline ui-shadow ui-corner-all ui-mini" role="button">EdgeHistogram</a>
+                <a href="javascript:searchUrl('jc_ha');" data-role="button" data-mini="true" data-inline="true" class="ui-link ui-btn ui-btn-inline ui-shadow ui-corner-all ui-mini" role="button">JCD</a>
+                <a href="javascript:searchUrl('ph_ha');" data-role="button" data-mini="true" data-inline="true" class="ui-link ui-btn ui-btn-inline ui-shadow ui-corner-all ui-mini" role="button">PHOG</a>
+                <a href="javascript:searchUrl('sc_ha');" data-role="button" data-mini="true" data-inline="true" class="ui-link ui-btn ui-btn-inline ui-shadow ui-corner-all ui-mini" role="button">ScalableColor</a>
+            </p>
+        </div>        
     </div>
 </body>
 </html>

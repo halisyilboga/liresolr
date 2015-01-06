@@ -2,8 +2,6 @@ package net.semanticmetadata.lire.solr;
 
 import net.semanticmetadata.lire.imageanalysis.*;
 import net.semanticmetadata.lire.indexing.hashing.BitSampling;
-import net.semanticmetadata.lire.indexing.tools.Extractor;
-import net.semanticmetadata.lire.utils.SerializationUtils;
 import org.apache.commons.codec.binary.Base64;
 import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
 import java.io.*;
@@ -11,7 +9,7 @@ import java.util.HashMap;
 
 public class AddImagesFromDataFile {
 
-    private static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(5);
+    private static final HashMap<Class, String> classToPrefix = new HashMap<Class, String>(11);
 
     static {
         classToPrefix.put(ColorLayout.class, "cl");
@@ -26,7 +24,6 @@ public class AddImagesFromDataFile {
         classToPrefix.put(FCTH.class, "fc");
         classToPrefix.put(FuzzyOpponentHistogram.class, "fo");
         classToPrefix.put(JointHistogram.class, "jh");
-
     }
 
     boolean verbose = true;
@@ -42,16 +39,16 @@ public class AddImagesFromDataFile {
     }
 
     public void createXml(File outDirectory, File inputFile) throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
-        InputStream in = new FileInputStream(inputFile);
-        byte[] tempInt = new byte[4];
-        int tmp, tmpFeature;
-        int count = 0;
-        byte[] temp = new byte[10 * 1024 * 1024];
-        // read file hashFunctionsFileName length:
-        FileWriter out = new FileWriter(outDirectory.getPath() + "/data_001.xml", false);
-        int fileCount = 1;
-        out.write("<add>\n");
-//		while ((tmp = in.read(tempInt, 0, 4)) > 0) {
+        try (InputStream in = new FileInputStream(inputFile)) {
+            byte[] tempInt = new byte[4];
+            int tmp, tmpFeature;
+            int count = 0;
+            byte[] temp = new byte[10 * 1024 * 1024];
+            try ( // read file hashFunctionsFileName length:
+                    FileWriter out = new FileWriter(outDirectory.getPath() + "/data_001.xml", false)) {
+                int fileCount = 1;
+                out.write("<add>\n");
+                //		while ((tmp = in.read(tempInt, 0, 4)) > 0) {
 //			tmp = SerializationUtils.toInt(tempInt);
 //			// read file name:
 //			in.read(temp, 0, tmp);
@@ -95,16 +92,15 @@ public class AddImagesFromDataFile {
 //				if (count % 10000 == 0) System.out.println(" " + count);
 //			}
 //		}
-        if (verbose) {
-            System.out.println(" " + count);
+                if (verbose) {
+                    System.out.println(" " + count);
+                }
+                out.write("</add>\n");
+            }
         }
-        out.write("</add>\n");
-        out.close();
-        in.close();
     }
 
     private void addToDocument(LireFeature feature, Writer out, File file) throws IOException {
-
         /*       try {
          LireFeature f1 = feature.getClass().newInstance();
          f1.extract(ImageIO.read(file));

@@ -37,7 +37,7 @@ def save(xml_file):
         for field in fields:
           key = field.get('name')
           params[0][key] = field.text
-        url = 'http://' + SOLR_HOSTNAME + ':8983/solr/collection1/update?wt=json&commitWithin=1000&overwrite=true'
+        url = 'http://' + SOLR_HOSTNAME + ':8983/solr/media_shard1_replica1/update?wt=json&commitWithin=1000&overwrite=true'
         data = json.dumps(params)
         #print data
         req = urllib2.Request(url)

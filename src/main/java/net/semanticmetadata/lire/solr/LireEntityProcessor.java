@@ -42,7 +42,7 @@ public class LireEntityProcessor extends EntityProcessorBase {
         new FuzzyOpponentHistogram(), 
         new JointHistogram()
     };
-    protected static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(11);
+    protected static final HashMap<Class, String> classToPrefix = new HashMap<Class, String>(11);
     int count = 0;
 
     static {
