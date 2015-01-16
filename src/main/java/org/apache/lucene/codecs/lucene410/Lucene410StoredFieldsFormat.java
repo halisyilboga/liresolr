@@ -1,4 +1,4 @@
-package org.apache.lucene.codecs.lucene46;
+package org.apache.lucene.codecs.lucene410;
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -26,7 +26,7 @@ import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.util.packed.PackedInts;
 
 /**
- * Lucene 4.6 stored fields format.
+ * Lucene 4.10.2 stored fields format.
  * <p/>
  * <p><b>Principle</b></p>
  * <p>This {@link StoredFieldsFormat} compresses blocks of 16KB of documents in
@@ -107,19 +107,19 @@ import org.apache.lucene.util.packed.PackedInts;
  * <p>This {@link StoredFieldsFormat} does not support individual documents
  * larger than (<tt>2<sup>31</sup> - 2<sup>14</sup></tt>) bytes. In case this
  * is a problem, you should use another format, such as
- * {@link Lucene46StoredFieldsFormat}.</p>
+ * {@link Lucene410StoredFieldsFormat}.</p>
  *
  * @lucene.experimental
  */
-public final class Lucene46StoredFieldsFormat extends CompressingStoredFieldsFormat {
+public final class Lucene410StoredFieldsFormat extends CompressingStoredFieldsFormat {
     // This is a modified file for stored field compression. It basically needs to be
     // deleted from the lucene core lib to take effect.
 
     /**
      * Sole constructor.
      */
-    public Lucene46StoredFieldsFormat() {
-        super("Lucene46StoredFields", CompressionMode.FAST_DECOMPRESSION, 512);
+    public Lucene410StoredFieldsFormat() {
+        super("Lucene410StoredFields", CompressionMode.FAST_DECOMPRESSION, 512);
     }
 
 }

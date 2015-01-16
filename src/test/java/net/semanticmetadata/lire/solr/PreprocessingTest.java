@@ -16,7 +16,7 @@ import java.io.IOException;
  */
 public class PreprocessingTest extends TestCase {
 
-    private final int maxSideLength = 512;
+    private int maxSideLength = 512;
 
     public void testSingleImage() throws IOException {
         String num = "1031";

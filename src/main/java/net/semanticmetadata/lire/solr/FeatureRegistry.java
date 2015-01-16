@@ -16,14 +16,14 @@ public class FeatureRegistry {
     /**
      * Naming conventions for code: 2 letters for global features. More for local ones.
      */
-    private static HashMap<String, Class<? extends LireFeature>> codeToClass = new HashMap<String, Class<? extends LireFeature>>(14);
+    private static HashMap<String, Class<? extends LireFeature>> codeToClass = new HashMap<String, Class<? extends LireFeature>>(16);
     /**
      * Caching the entries for fast retrieval or Strings without generating new objects.
      */
-    private static HashMap<String, Class<? extends LireFeature>> hashFieldToClass = new HashMap<String, Class<? extends LireFeature>>(14);
-    private static HashMap<String, Class<? extends LireFeature>> featureFieldToClass = new HashMap<String, Class<? extends LireFeature>>(14);
-    private static HashMap<String, String> hashFieldToFeatureField = new HashMap<String, String>(14);
-    private static HashMap<Class<? extends LireFeature>, String> classToCode = new HashMap<Class<? extends LireFeature>, String>(14);
+    private static HashMap<String, Class<? extends LireFeature>> hashFieldToClass = new HashMap<String, Class<? extends LireFeature>>(16);
+    private static HashMap<String, Class<? extends LireFeature>> featureFieldToClass = new HashMap<String, Class<? extends LireFeature>>(16);
+    private static HashMap<String, String> hashFieldToFeatureField = new HashMap<String, String>(16);
+    private static HashMap<Class<? extends LireFeature>, String> classToCode = new HashMap<Class<? extends LireFeature>, String>(16);
 
 
     // Constants.
@@ -45,15 +45,19 @@ public class FeatureRegistry {
         codeToClass.put("fc", FCTH.class);
         codeToClass.put("fo", FuzzyOpponentHistogram.class);
         codeToClass.put("jh", JointHistogram.class);
-        
         codeToClass.put("sc", ScalableColor.class);
         codeToClass.put("pc", SPCEDD.class);
 
         // local feature based histograms.
         codeToClass.put("sim_ce", GenericByteLireFeature.class); // SIMPLE CEDD ... just to give a hint how it might look like.
-        codeToClass.put("su", SurfSolrFeature.class);
+
+        // add your features here if you want more.
+        // ....
+
         // -----< caches to be filled >----------------
-        for (String code : codeToClass.keySet()) {
+
+        for (Iterator<String> iterator = codeToClass.keySet().iterator(); iterator.hasNext(); ) {
+            String code = iterator.next();
             hashFieldToClass.put(code + hashFieldPostfix, codeToClass.get(code));
             featureFieldToClass.put(code + featureFieldPostfix, codeToClass.get(code));
             hashFieldToFeatureField.put(code + hashFieldPostfix, code + featureFieldPostfix);
@@ -110,6 +114,10 @@ public class FeatureRegistry {
 
     public static String getCodeForClass(Class<? extends LireFeature> featureClass) {
         return classToCode.get(featureClass);
+    }
+
+    public static Class getClassForCode(String code) {
+        return codeToClass.get(code);
     }
 
     public static String codeToHashField(String code) {

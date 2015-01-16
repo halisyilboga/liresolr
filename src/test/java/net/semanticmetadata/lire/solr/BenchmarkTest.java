@@ -172,12 +172,12 @@ public class BenchmarkTest extends TestCase {
         StringBuilder ab = new StringBuilder();
         URL oracle = new URL(url);
         URLConnection yc = oracle.openConnection();
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(
-                yc.getInputStream()))) {
-            String inputLine;
-            while ((inputLine = in.readLine()) != null)
-                ab.append(inputLine);
-        }
+        BufferedReader in = new BufferedReader(new InputStreamReader(
+                yc.getInputStream()));
+        String inputLine;
+        while ((inputLine = in.readLine()) != null)
+            ab.append(inputLine);
+        in.close();
         return ab.toString();
     }
 }

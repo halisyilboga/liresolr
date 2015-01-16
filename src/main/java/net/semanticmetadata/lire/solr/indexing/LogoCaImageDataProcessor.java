@@ -8,12 +8,12 @@ package net.semanticmetadata.lire.solr.indexing;
 public class LogoCaImageDataProcessor implements ImageDataProcessor {
     @Override
     public CharSequence getTitle(String filename) {
-        return filename.replace("/data/digitalcandy/ml/converted-", "").replaceAll("\\\\", "/");
+        return filename.replace("testdata/ferrari", "").replaceAll("\\\\", "/");
     }
 
     @Override
     public CharSequence getIdentifier(String filename) {
-        return filename.replace("/data/digitalcandy/ml/converted-", "").replaceAll("\\\\", "/");
+        return filename.replace("testdata/ferrari", "").replaceAll("\\\\", "/");
     }
 
     @Override

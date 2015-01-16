@@ -36,6 +36,7 @@
  * (c) 2002-2013 by Mathias Lux (mathias@juggle.at)
  *     http://www.semanticmetadata.net/lire, http://www.lire-project.net
  */
+
 package net.semanticmetadata.lire.solr;
 
 import net.semanticmetadata.lire.imageanalysis.EdgeHistogram;
@@ -62,66 +63,48 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
-import java.text.ParseException;
 import java.util.*;
-import org.apache.solr.common.SolrDocument;
-import org.apache.solr.common.SolrDocumentList;
-import org.apache.solr.search.QParser;
-import org.apache.solr.search.SyntaxError;
 
 /**
- * This is the main LIRE RequestHandler for the Solr Plugin. It supports query
- * by example using the indexed id, an url or a feature vector. Furthermore,
- * feature extraction and random selection of images are supported.
+ * This is the main LIRE RequestHandler for the Solr Plugin. It supports query by example using the indexed id,
+ * an url or a feature vector. Furthermore, feature extraction and random selection of images are supported.
  *
  * @author Mathias Lux, mathias@juggle.at, 07.07.13
  */
+
 public class LireRequestHandler extends RequestHandlerBase {
-
     //    private static HashMap<String, Class> fieldToClass = new HashMap<String, Class>(5);
-    volatile long totalTime = 0;
-    private final int defaultNumberOfResults = 60;
-    static int defaultStartValue = 0;
+    private long time = 0;
+    private int countRequests = 0;
+    private int defaultNumberOfResults = 60;
     /**
-     * number of candidate results retrieved from the index. The higher this
-     * number, the slower, the but more accurate the retrieval will be. 10k is a
-     * good value for starters.
+     * number of candidate results retrieved from the index. The higher this number, the slower,
+     * the but more accurate the retrieval will be. 10k is a good value for starters.
      */
-    private int numberOfCandidateResults = 50000;
-    private static final int DEFAULT_NUMBER_OF_CANDIDATES = 50000;
+    private int numberOfCandidateResults = 10000;
+    private static final int DEFAULT_NUMBER_OF_CANDIDATES = 10000;
 
     /**
-     * The number of query terms that go along with the TermsFilter search. We
-     * need some to get a score, the less the faster. I put down a minimum of
-     * three in the method, this value gives the percentage of the overall
-     * number used (selected randomly).
+     * The number of query terms that go along with the TermsFilter search. We need some to get a
+     * score, the less the faster. I put down a minimum of three in the method, this value gives
+     * the percentage of the overall number used (selected randomly).
      */
     private double numberOfQueryTerms = 0.33;
     private static final double DEFAULT_NUMBER_OF_QUERY_TERMS = 0.33;
-
-    volatile long numErrors;
-    volatile long numRequests;
 
     static {
         // one time hash function read ...
         try {
             BitSampling.readHashFunctions();
-        } catch (IOException ioe) {
-
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
+
 
     @Override
     public void init(NamedList args) {
         super.init(args);
-        // Caching off by default
-        httpCaching = false;
-        if (args != null) {
-            Object caching = args.get("httpCaching");
-            if (caching != null) {
-                httpCaching = Boolean.parseBoolean(caching.toString());
-            }
-        }
     }
 
     /**
@@ -138,28 +121,18 @@ public class LireRequestHandler extends RequestHandlerBase {
      */
     @Override
     public void handleRequestBody(SolrQueryRequest req, SolrQueryResponse rsp) throws Exception {
-        numRequests++;
-        long startTime = System.currentTimeMillis();
-        try {
-            // (1) check if the necessary parameters are here
-            if (req.getParams().get("hashes") != null) { // we are searching for hashes ...
-                handleHashSearch(req, rsp);
-            } else if (req.getParams().get("url") != null) { // we are searching for an image based on an URL
-                handleUrlSearch(req, rsp);
-            } else if (req.getParams().get("id") != null) { // we are searching for an image based on an URL
-                handleIdSearch(req, rsp);
-            } else if (req.getParams().get("extract") != null) { // we are trying to extract from an image URL.
-                handleExtract(req, rsp);
-            } else { // lets return random results.
-                handleRandomSearch(req, rsp);
-            }
-        } catch (IOException | IllegalAccessException | InstantiationException e) {
-            numErrors++;
-            //LOG.error(e.getMessage());
-        } finally {
-            totalTime += System.currentTimeMillis() - startTime;
+        // (1) check if the necessary parameters are here
+        if (req.getParams().get("hashes") != null) { // we are searching for hashes ...
+            handleHashSearch(req, rsp);
+        } else if (req.getParams().get("url") != null) { // we are searching for an image based on an URL
+            handleUrlSearch(req, rsp);
+        } else if (req.getParams().get("id") != null) { // we are searching for an image based on an URL
+            handleIdSearch(req, rsp);
+        } else if (req.getParams().get("extract") != null) { // we are trying to extract from an image URL.
+            handleExtract(req, rsp);
+        } else { // lets return random results.
+            handleRandomSearch(req, rsp);
         }
-
     }
 
     /**
@@ -171,14 +144,13 @@ public class LireRequestHandler extends RequestHandlerBase {
      * @throws InstantiationException
      * @throws IllegalAccessException
      */
-    private void handleIdSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, InstantiationException, IllegalAccessException, ParseException, SyntaxError {
+    private void handleIdSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, InstantiationException, IllegalAccessException {
         SolrIndexSearcher searcher = req.getSearcher();
         try {
             TopDocs hits = searcher.search(new TermQuery(new Term("id", req.getParams().get("id"))), 1);
             String paramField = "cl_ha";
-            if (req.getParams().get("field") != null) {
+            if (req.getParams().get("field") != null)
                 paramField = req.getParams().get("field");
-            }
             LireFeature queryFeature = (LireFeature) FeatureRegistry.getClassForHashField(paramField).newInstance();
             rsp.add("QueryField", paramField);
             rsp.add("QueryFeature", queryFeature.getClass().getName());
@@ -187,40 +159,31 @@ public class LireRequestHandler extends RequestHandlerBase {
             if (hits.scoreDocs.length > 0) {
                 // Using DocValues to get the actual data from the index.
                 BinaryDocValues binaryValues = MultiDocValues.getBinaryValues(searcher.getIndexReader(), FeatureRegistry.getFeatureFieldName(paramField)); // ***  #
-                if (binaryValues == null) {
+                if (binaryValues == null)
                     System.err.println("Could not find the DocValues of the query document. Are they in the index?");
-                }
                 BytesRef bytesRef = new BytesRef();
                 bytesRef = binaryValues.get(hits.scoreDocs[0].doc);
 //                Document d = searcher.getIndexReader().document(hits.scoreDocs[0].doc);
 //                String histogramFieldName = paramField.replace("_ha", "_hi");
                 queryFeature.setByteArrayRepresentation(bytesRef.bytes, bytesRef.offset, bytesRef.length);
                 int paramRows = defaultNumberOfResults;
-                if (req.getParams().getInt("rows") != null) {
+                if (req.getParams().getInt("rows") != null)
                     paramRows = req.getParams().getInt("rows");
-                }
-                int paramStarts = defaultStartValue;
-                if (req.getParams().getInt("start") != null) {
-                    paramStarts = req.getParams().getInt("start");
-                }
-
                 // Re-generating the hashes to save space (instead of storing them in the index)
                 int[] hashes = BitSampling.generateHashes(queryFeature.getDoubleHistogram());
                 List<Term> termFilter = createTermFilter(hashes, paramField);
-                doSearch(req, paramStarts, paramRows, rsp, searcher, paramField, paramRows, termFilter, createQuery(hashes, paramField, numberOfQueryTerms), queryFeature);
+                doSearch(rsp, searcher, paramField, paramRows, termFilter, createQuery(hashes, paramField, numberOfQueryTerms), queryFeature);
             } else {
                 rsp.add("Error", "Did not find an image with the given id " + req.getParams().get("id"));
             }
-        } catch (IOException | InstantiationException | IllegalAccessException e) {
+        } catch (Exception e) {
             rsp.add("Error", "There was an error with your search for the image with the id " + req.getParams().get("id")
                     + ": " + e.getMessage());
-            numErrors++;
         }
     }
 
     /**
-     * Returns a random set of documents from the index. Mainly for testing
-     * purposes.
+     * Returns a random set of documents from the index. Mainly for testing purposes.
      *
      * @param req
      * @param rsp
@@ -231,9 +194,8 @@ public class LireRequestHandler extends RequestHandlerBase {
         DirectoryReader indexReader = searcher.getIndexReader();
         double maxDoc = indexReader.maxDoc();
         int paramRows = defaultNumberOfResults;
-        if (req.getParams().getInt("rows") != null) {
+        if (req.getParams().getInt("rows") != null)
             paramRows = req.getParams().getInt("rows");
-        }
         LinkedList list = new LinkedList();
         while (list.size() < paramRows) {
             HashMap m = new HashMap(2);
@@ -246,8 +208,8 @@ public class LireRequestHandler extends RequestHandlerBase {
     }
 
     /**
-     * Searches for an image given by an URL. Note that (i) extracting image
-     * features takes time and (ii) not every image is readable by Java.
+     * Searches for an image given by an URL. Note that (i) extracting image features takes time and
+     * (ii) not every image is readable by Java.
      *
      * @param req
      * @param rsp
@@ -255,25 +217,15 @@ public class LireRequestHandler extends RequestHandlerBase {
      * @throws InstantiationException
      * @throws IllegalAccessException
      */
-    private void handleUrlSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, InstantiationException, IllegalAccessException, ParseException, SyntaxError {
+    private void handleUrlSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, InstantiationException, IllegalAccessException {
         SolrParams params = req.getParams();
         String paramUrl = params.get("url");
-        
         String paramField = "cl_ha";
-        if (req.getParams().get("field") != null) {
+        if (req.getParams().get("field") != null)
             paramField = req.getParams().get("field");
-        }
-        
         int paramRows = defaultNumberOfResults;
-        if (params.get("rows") != null) {
+        if (params.get("rows") != null)
             paramRows = params.getInt("rows");
-        }
-        
-        int paramStarts = defaultStartValue;
-        if (req.getParams().getInt("start") != null) {
-            paramStarts = req.getParams().getInt("start");
-        }
-
         numberOfQueryTerms = req.getParams().getDouble("accuracy", DEFAULT_NUMBER_OF_QUERY_TERMS);
         numberOfCandidateResults = req.getParams().getInt("candidates", DEFAULT_NUMBER_OF_CANDIDATES);
         LireFeature feat = null;
@@ -285,31 +237,28 @@ public class LireRequestHandler extends RequestHandlerBase {
             img = ImageUtils.trimWhiteSpace(img);
             // getting the right feature per field:
             if (paramField == null || FeatureRegistry.getClassForHashField(paramField) == null) // if the feature is not registered.
-            {
                 feat = new EdgeHistogram();
-            } else {
+            else {
                 feat = (LireFeature) FeatureRegistry.getClassForHashField(paramField).newInstance();
             }
             feat.extract(img);
             hashes = BitSampling.generateHashes(feat.getDoubleHistogram());
             termFilter = createTermFilter(hashes, paramField);
-        } catch (IOException | InstantiationException | IllegalAccessException e) {
+        } catch (Exception e) {
             rsp.add("Error", "Error reading image from URL: " + paramUrl + ": " + e.getMessage());
-            numErrors++;
+            e.printStackTrace();
         }
         // search if the feature has been extracted.
-        if (feat != null) {
-            doSearch(req, paramStarts, paramRows, rsp, req.getSearcher(), paramField, paramRows, termFilter, createQuery(hashes, paramField, numberOfQueryTerms), feat);
-        }
+        if (feat != null)
+            doSearch(rsp, req.getSearcher(), paramField, paramRows, termFilter, createQuery(hashes, paramField, numberOfQueryTerms), feat);
     }
 
     private void handleExtract(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, InstantiationException, IllegalAccessException {
         SolrParams params = req.getParams();
         String paramUrl = params.get("extract");
         String paramField = "cl_ha";
-        if (req.getParams().get("field") != null) {
+        if (req.getParams().get("field") != null)
             paramField = req.getParams().get("field");
-        }
 //        int paramRows = defaultNumberOfResults;
 //        if (params.get("rows") != null)
 //            paramRows = params.getInt("rows");
@@ -321,28 +270,24 @@ public class LireRequestHandler extends RequestHandlerBase {
             img = ImageUtils.trimWhiteSpace(img);
             // getting the right feature per field:
             if (paramField == null || FeatureRegistry.getClassForHashField(paramField) == null) // if the feature is not registered.
-            {
                 feat = new EdgeHistogram();
-            } else {
+            else {
                 feat = (LireFeature) FeatureRegistry.getClassForHashField(paramField).newInstance();
             }
             feat.extract(img);
-            SolrDocument doc = new SolrDocument();
-            doc.setField("histogram", Base64.encodeBase64String(feat.getByteArrayRepresentation()));
-
+            rsp.add("histogram", Base64.encodeBase64String(feat.getByteArrayRepresentation()));
             int[] hashes = BitSampling.generateHashes(feat.getDoubleHistogram());
             ArrayList<String> hashStrings = new ArrayList<String>(hashes.length);
             for (int i = 0; i < hashes.length; i++) {
                 hashStrings.add(Integer.toHexString(hashes[i]));
             }
             Collections.shuffle(hashStrings);
-            doc.setField("hashes", hashStrings);
-            rsp.add("response", doc);
+            rsp.add("hashes", hashStrings);
 //            just use 50% of the hashes for search ...
 //            query = createTermFilter(hashes, paramField, 0.5d);
-        } catch (IOException | InstantiationException | IllegalAccessException e) {
-            numErrors++;
-            rsp.add("Error", "Error reading image from URL: " + paramUrl + ": " + e.getMessage());
+        } catch (Exception e) {
+//            rsp.add("Error", "Error reading image from URL: " + paramUrl + ": " + e.getMessage());
+            e.printStackTrace();
         }
         // search if the feature has been extracted.
 //        if (feat != null) doSearch(rsp, req.getSearcher(), paramField, paramRows, query, feat);
@@ -357,7 +302,7 @@ public class LireRequestHandler extends RequestHandlerBase {
      * @throws IllegalAccessException
      * @throws InstantiationException
      */
-    private void handleHashSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, IllegalAccessException, InstantiationException, ParseException, SyntaxError {
+    private void handleHashSearch(SolrQueryRequest req, SolrQueryResponse rsp) throws IOException, IllegalAccessException, InstantiationException {
         SolrParams params = req.getParams();
         SolrIndexSearcher searcher = req.getSearcher();
         // get the params needed:
@@ -368,18 +313,11 @@ public class LireRequestHandler extends RequestHandlerBase {
         String[] hashStrings = params.get("hashes").trim().split(" ");
         byte[] featureVector = Base64.decodeBase64(params.get("feature"));
         String paramField = "cl_ha";
-        if (req.getParams().get("field") != null) {
+        if (req.getParams().get("field") != null)
             paramField = req.getParams().get("field");
-        }
         int paramRows = defaultNumberOfResults;
-        if (params.getInt("rows") != null) {
+        if (params.getInt("rows") != null)
             paramRows = params.getInt("rows");
-        }
-        int paramStarts = defaultStartValue;
-        if (params.getInt("start") != null) {
-            paramStarts = params.getInt("start");
-        }
-
         numberOfQueryTerms = req.getParams().getDouble("accuracy", DEFAULT_NUMBER_OF_QUERY_TERMS);
         numberOfCandidateResults = req.getParams().getInt("candidates", DEFAULT_NUMBER_OF_CANDIDATES);
         // create boolean query:
@@ -405,25 +343,11 @@ public class LireRequestHandler extends RequestHandlerBase {
         queryFeature.setByteArrayRepresentation(featureVector);
 
         // get results:
-        doSearch(req, paramStarts, paramRows, rsp, searcher, paramField, paramRows, termFilter, new MatchAllDocsQuery(), queryFeature);
-    }
-
-    private Filter buildFilter(String[] fqs, SolrQueryRequest req)
-            throws IOException, ParseException, SyntaxError {
-        if (fqs != null && fqs.length > 0) {
-            BooleanQuery fquery = new BooleanQuery();
-            for (String fq : fqs) {
-                QParser parser = QParser.getParser(fq, null, req);
-                fquery.add(parser.getQuery(), BooleanClause.Occur.MUST);
-            }
-            return new CachingWrapperFilter(new QueryWrapperFilter(fquery));
-        }
-        return null;
+        doSearch(rsp, searcher, paramField, paramRows, termFilter, new MatchAllDocsQuery(), queryFeature);
     }
 
     /**
-     * Actual search implementation based on (i) hash based retrieval and (ii)
-     * feature based re-ranking.
+     * Actual search implementation based on (i) hash based retrieval and (ii) feature based re-ranking.
      *
      * @param rsp
      * @param searcher
@@ -435,20 +359,19 @@ public class LireRequestHandler extends RequestHandlerBase {
      * @throws IllegalAccessException
      * @throws InstantiationException
      */
-    private void doSearch(SolrQueryRequest req, int paramStarts, int paramRows, SolrQueryResponse rsp, SolrIndexSearcher searcher, String hashFieldName, int maximumHits, List<Term> terms, Query query, LireFeature queryFeature) throws IOException, IllegalAccessException, InstantiationException, ParseException, SyntaxError {
-        SolrDocumentList results = new SolrDocumentList();
+    private void doSearch(SolrQueryResponse rsp, SolrIndexSearcher searcher, String hashFieldName, int maximumHits, List<Term> terms, Query query, LireFeature queryFeature) throws IOException, IllegalAccessException, InstantiationException {
         // temp feature instance
         LireFeature tmpFeature = queryFeature.getClass().newInstance();
         // Taking the time of search for statistical purposes.
-        totalTime = System.currentTimeMillis();
+        time = System.currentTimeMillis();
         TopDocs docs = searcher.search(query, numberOfCandidateResults);   // with query only.
 //        TopDocs docs = searcher.search(query, new TermsFilter(terms), numberOfCandidateResults);   // with TermsFilter and boosting by simple query
 //        TopDocs docs = searcher.search(new ConstantScoreQuery(new TermsFilter(terms)), numberOfCandidateResults); // just with TermsFilter
-        totalTime = System.currentTimeMillis() - totalTime;
+        time = System.currentTimeMillis() - time;
         rsp.add("RawDocsCount", docs.scoreDocs.length + "");
-        rsp.add("RawDocsSearchTime", totalTime + "");
+        rsp.add("RawDocsSearchTime", time + "");
         // re-rank
-        totalTime = System.currentTimeMillis();
+        time = System.currentTimeMillis();
         TreeSet<SimpleResult> resultScoreDocs = new TreeSet<SimpleResult>();
         float maxDistance = -1f;
         float tmpScore;
@@ -457,81 +380,43 @@ public class LireRequestHandler extends RequestHandlerBase {
         // iterating and re-ranking the documents.
         BinaryDocValues binaryValues = MultiDocValues.getBinaryValues(searcher.getIndexReader(), featureFieldName); // ***  #
         BytesRef bytesRef;// = new BytesRef();
-        for (ScoreDoc scoreDoc : docs.scoreDocs) {
+        for (int i = 0; i < docs.scoreDocs.length; i++) {
             // using DocValues to retrieve the field values ...
-            bytesRef = binaryValues.get(scoreDoc.doc);
+            bytesRef = binaryValues.get(docs.scoreDocs[i].doc);
             tmpFeature.setByteArrayRepresentation(bytesRef.bytes, bytesRef.offset, bytesRef.length);
             // Getting the document from the index.
             // This is the slow step based on the field compression of stored fields.
 //            tmpFeature.setByteArrayRepresentation(d.getBinaryValue(name).bytes, d.getBinaryValue(name).offset, d.getBinaryValue(name).length);
             tmpScore = queryFeature.getDistance(tmpFeature);
-            if (resultScoreDocs.size() < maximumHits) {
-                // todo: There's potential here for a memory saver, think of a clever data structure that can do the trick without creating a new SimpleResult for each result.
-                resultScoreDocs.add(new SimpleResult(tmpScore, searcher.doc(scoreDoc.doc), scoreDoc.doc));
+            if (resultScoreDocs.size() < maximumHits) { // todo: There's potential here for a memory saver, think of a clever data structure that can do the trick without creating a new SimpleResult for each result.
+                resultScoreDocs.add(new SimpleResult(tmpScore, searcher.doc(docs.scoreDocs[i].doc), docs.scoreDocs[i].doc));
                 maxDistance = resultScoreDocs.last().getDistance();
             } else if (tmpScore < maxDistance) {
-                //                if it is nearer to the sample than at least one of the current set:
+//                if it is nearer to the sample than at least one of the current set:
 //                remove the last one ...
                 resultScoreDocs.remove(resultScoreDocs.last());
 //                add the new one ...
-                resultScoreDocs.add(new SimpleResult(tmpScore, searcher.doc(scoreDoc.doc), scoreDoc.doc));
-                //                and set our new distance border ...
+                resultScoreDocs.add(new SimpleResult(tmpScore, searcher.doc(docs.scoreDocs[i].doc), docs.scoreDocs[i].doc));
+//                and set our new distance border ...
                 maxDistance = resultScoreDocs.last().getDistance();
             }
         }
 //        System.out.println("** Creating response.");
-        totalTime = System.currentTimeMillis() - totalTime;
-        rsp.add("ReRankSearchTime", totalTime + "");
-//        LinkedList list = new LinkedList();
-//        for (SimpleResult result : resultScoreDocs) {
-//            HashMap m = new HashMap(2);
-//            m.put("d", result.getDistance());
-//            m.put("id", result.getDocument().get("id"));
-//            m.put("title", result.getDocument().get("title"));
-//            m.put("width", result.getDocument().get("width"));
-//            m.put("height", result.getDocument().get("height"));
-//            m.put("type", result.getDocument().get("type"));
-////            m.put(field, result.getDocument().get(field));
-////            m.put(field.replace("_ha", "_hi"), result.getDocument().getBinaryValue(field));
-//            list.add(m);
-//        }
-//
-//        results.clear();
-//        results.addAll(list);
-//        results.setNumFound(docs.scoreDocs.length);
-//        results.setMaxScore(maxDistance);
-//        rsp.add("response", results);
-
-        //rsp.add("docs", list);
-        // rsp.add("Test-name", "Test-val");
-        int numFound = 0;
-
-        List<SolrDocument> slice = new ArrayList<SolrDocument>();
-
-        for (SimpleResult sdoc : resultScoreDocs) {
-            Float distance = (Float) sdoc.getDistance();
-            if (maxDistance < distance) {
-                maxDistance = distance;
-            }
-            if (numFound >= paramStarts && numFound < paramStarts + paramRows) {
-                SolrDocument solrDocument = new SolrDocument();
-                solrDocument.setField("id", sdoc.getDocument().get("id"));
-                solrDocument.setField("title", sdoc.getDocument().get("title"));
-                solrDocument.setField("width", sdoc.getDocument().get("width"));
-                solrDocument.setField("height", sdoc.getDocument().get("height"));
-                solrDocument.setField("distance", distance);
-                slice.add(solrDocument);
-            }
-            numFound++;
+        time = System.currentTimeMillis() - time;
+        rsp.add("ReRankSearchTime", time + "");
+        LinkedList list = new LinkedList();
+        for (Iterator<SimpleResult> it = resultScoreDocs.iterator(); it.hasNext(); ) {
+            SimpleResult result = it.next();
+            HashMap m = new HashMap(2);
+            m.put("d", result.getDistance());
+            m.put("id", result.getDocument().get("id"));
+            m.put("title", result.getDocument().get("title"));
+//            m.put(field, result.getDocument().get(field));
+//            m.put(field.replace("_ha", "_hi"), result.getDocument().getBinaryValue(field));
+            list.add(m);
         }
-
-        results.clear();
-        results.addAll(slice);
-        results.setNumFound(docs.scoreDocs.length);
-        results.setMaxScore(maxDistance);
-        results.setStart(paramStarts);
-        rsp.add("response", results);
-
+        rsp.add("docs", list);
+        // rsp.add("Test-name", "Test-val");
     }
 
     @Override
@@ -541,20 +426,14 @@ public class LireRequestHandler extends RequestHandlerBase {
 
     @Override
     public String getSource() {
-        return "https://github.com/dynamicguy/liresolr";
-    }
-
-    @Override
-    public String getVersion() {
-        return "0.9.6-SNAPSHOT";
+        return "http://lire-project.net";
     }
 
     @Override
     public NamedList<Object> getStatistics() {
+        // Change stats here to get an insight in the admin console.
         NamedList<Object> statistics = super.getStatistics();
-        statistics.add("requests", numRequests);
-        statistics.add("errors", numErrors);
-        statistics.add("totalTime", "" + totalTime);
+        statistics.add("Number of Requests", countRequests);
         return statistics;
     }
 
@@ -567,9 +446,7 @@ public class LireRequestHandler extends RequestHandlerBase {
         BooleanQuery query = new BooleanQuery();
         int numHashes = (int) Math.min(hashes.length, Math.floor(hashes.length * size));
         // a minimum of 3 hashes ...
-        if (numHashes < 3) {
-            numHashes = 3;
-        }
+        if (numHashes < 3) numHashes = 3;
         for (int i = 0; i < numHashes; i++) {
             // be aware that the hashFunctionsFileName of the field must match the one you put the hashes in before.
             query.add(new BooleanClause(new TermQuery(new Term(paramField, Integer.toHexString(hashes[i]))), BooleanClause.Occur.SHOULD));
@@ -580,9 +457,8 @@ public class LireRequestHandler extends RequestHandlerBase {
     }
 
     /**
-     * This is used to create a TermsFilter ... should be used to select in the
-     * index based on many terms. We just need to integrate a minimum query too,
-     * else we'd not get the appropriate results.
+     * This is used to create a TermsFilter ... should be used to select in the index based on many terms.
+     * We just need to integrate a minimum query too, else we'd not get the appropriate results.
      *
      * @param hashes
      * @param paramField

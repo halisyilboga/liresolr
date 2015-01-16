@@ -36,6 +36,7 @@
  * (c) 2002-2013 by Mathias Lux (mathias@juggle.at)
  *     http://www.semanticmetadata.net/lire, http://www.lire-project.net
  */
+
 package net.semanticmetadata.lire.solr;
 
 import org.apache.commons.codec.binary.Base64;
@@ -46,39 +47,33 @@ import org.apache.solr.search.SyntaxError;
 import org.apache.solr.search.ValueSourceParser;
 
 /**
- * <p>
- * A query function for sorting results based on the LIRE CBIR functions.
- * Implementation based partially on the outdated guide given on
- * http://www.supermind.org/blog/756, comments on the mailing list provided from
- * Chris Hostetter, and the 4.4 Solr & Lucene source. </p>
- * <p/>
- * <p>
- * Do not forget to add the function parser to the lsolrconfig.xml file like
- * this:<br/>
- * <valueSourceParser name="lirefunc" class="net.semanticmetadata.lire.solr.LireValueSourceParser" /></p>
- * <p/>
- * <p>
- * To use the function getting a distance to a reference image use it like:<br/>
- * http://localhost:9000/solr/lire/select?q=*:*&fl=id,lirefunc(cl,"FQY5DhMYDg0ODg0PEBEPDg4ODg8QEgsgEBAQEBAgEBAQEBA%3D")<br/>
- * The first parameter gives the field (cl, ph, eh, or jc), the second gives the
- * byte[] representation of the histogram in Base64 encoding</p>
+ * <p>A query function for sorting results based on the LIRE CBIR functions.
+ * Implementation based partially on the outdated guide given on http://www.supermind.org/blog/756,
+ * comments on the mailing list provided from Chris Hostetter, and the 4.4 Solr & Lucene source. </p>
  *
- * @author Mathias Lux, 17.09.13, 12:21
+ * <p>Do not forget to add the function parser to the lsolrconfig.xml file like this:<br/>
+ * <valueSourceParser name="lirefunc" class="net.semanticmetadata.lire.solr.LireValueSourceParser" /></p>
+ *
+ * <p>To use the function getting a distance to a reference image use it like:<br/>
+ * http://localhost:9000/solr/lire/select?q=*:*&fl=id,lirefunc(cl,"FQY5DhMYDg0ODg0PEBEPDg4ODg8QEgsgEBAQEBAgEBAQEBA%3D")<br/>
+ * The first parameter gives the field (cl, ph, eh, or jc), the second gives the byte[] representation of the
+ * histogram in Base64 encoding</p>
+ *
+ * @author Mathias Lux, mathias@juggle.at, 17.09.2013
  */
 public class LireValueSourceParser extends ValueSourceParser {
-
-    @Override
     public void init(NamedList namedList) {
 
     }
 
     @Override
     public ValueSource parse(FunctionQParser fp) throws SyntaxError {
-        String field = fp.parseArg();                          // eg. cl_hi
-        byte[] hist = Base64.decodeBase64(fp.parseArg());     // eg. FQY5DhMYDg0ODg0PEBEPDg4ODg8QEgsgEBAQEBAgEBAQEBA=
+        String field=fp.parseArg();                          // eg. cl_hi
+        String featureString = fp.parseArg();
+        // System.out.println(featureString);
+        byte[] hist= Base64.decodeBase64(featureString);     // eg. FQY5DhMYDg0ODg0PEBEPDg4ODg8QEgsgEBAQEBAgEBAQEBA=
         double maxDistance = Double.MAX_VALUE;
-        if (fp.hasMoreArguments()) // if there is a third argument, it's the max value to return if there is none. Note the query cache is not updated upon parameter change.
-        {
+        if (fp.hasMoreArguments()) {                           // if there is a third argument, it's the max value to return if there is none. Note the query cache is not updated upon parameter change.
             maxDistance = Double.parseDouble(fp.parseArg());
         }
         return new LireValueSource(field, hist, maxDistance);

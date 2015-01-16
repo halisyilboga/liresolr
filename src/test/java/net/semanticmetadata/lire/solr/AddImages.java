@@ -36,6 +36,7 @@
  * (c) 2002-2013 by Mathias Lux (mathias@juggle.at)
  *     http://www.semanticmetadata.net/lire, http://www.lire-project.net
  */
+
 package net.semanticmetadata.lire.solr;
 
 import net.semanticmetadata.lire.imageanalysis.*;
@@ -53,13 +54,13 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
 
 /**
  * This file is part of LIRE, a Java library for content based image retrieval.
  *
  * @author Mathias Lux, mathias@juggle.at, 22.06.13
  */
+
 // ADDING DOCUMENTS:
 //<add>
 //<doc>
@@ -70,31 +71,33 @@ import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
 //</doc>
 //        [<doc> ... </doc>[<doc> ... </doc>]]
 //</add>
+
 // DELETING DOCUMENTS:
 //<delete>
 //        <id>05991</id><id>06000</id>
 //        <query>office:Bridgewater</query>
 //        <query>office:Osaka</query>
 //</delete>
-// <delete><query>id:*</query></delete>
-public class AddImages {
 
-    static String baseURL = "http://localhost:8983/solr/media_shard1_replica1";
+// <delete><query>id:*</query></delete>
+
+public class AddImages {
+    static String baseURL = "http://localhost:9000/solr/lire";
 
     public static void main(String[] args) throws IOException, InterruptedException {
         BitSampling.readHashFunctions();
         LinkedList<Thread> threads = new LinkedList<Thread>();
-        for (int j = 10; j < 21; j++) {
+        for (int j = 10; j<21; j++) {
             final int tz = j;
-            Thread t = new Thread() {
+            Thread t = new Thread(){
                 @Override
                 public void run() {
                     try {
-                        List<File> files = FileUtils.getAllImageFiles(new File("D:\\DataSets\\WIPO-US\\jpg_us_trim\\" + tz), true);
+                        List<File> files = FileUtils.getAllImageFiles(new File("D:\\DataSets\\WIPO-US\\jpg_us_trim\\"+tz), true);
                         int count = 0;
-                        BufferedWriter br = new BufferedWriter(new FileWriter("add-us-" + tz + ".xml", false));
+                        BufferedWriter br = new BufferedWriter(new FileWriter("add-us-"+tz+".xml", false));
                         br.write("<add>\n");
-                        for (Iterator<File> iterator = files.iterator(); iterator.hasNext();) {
+                        for (Iterator<File> iterator = files.iterator(); iterator.hasNext(); ) {
                             File file = iterator.next();
                             br.write(createAddDoc(file).toString());
                             count++;
@@ -103,13 +106,15 @@ public class AddImages {
                         br.write("</add>\n");
                         br.close();
                     } catch (IOException e) {
+                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                     }
                 }
             };
             t.start();
             threads.add(t);
         }
-        for (Thread next : threads) {
+        for (Iterator<Thread> iterator = threads.iterator(); iterator.hasNext(); ) {
+            Thread next = iterator.next();
             next.join();
         }
     }
@@ -127,16 +132,11 @@ public class AddImages {
         result.append(image.getName());
         result.append("</field>\n");
         // features:
-        getFields(img, result, new PHOG(), "ph_hi", "ph_ha");
         getFields(img, result, new ColorLayout(), "cl_hi", "cl_ha");
         getFields(img, result, new EdgeHistogram(), "eh_hi", "eh_ha");
         getFields(img, result, new JCD(), "jc_hi", "jc_ha");
-        getFields(img, result, new CEDD(), "ce_hi", "ce_ha");
-        getFields(img, result, new ScalableColor(), "sc_hi", "sc_ha");
+        getFields(img, result, new PHOG(), "ph_hi", "ph_ha");
         getFields(img, result, new OpponentHistogram(), "oh_hi", "oh_ha");
-        getFields(img, result, new FCTH(), "fc_hi", "fc_ha");
-        getFields(img, result, new FuzzyOpponentHistogram(), "fo_hi", "fo_ha");
-        getFields(img, result, new JointHistogram(), "jh_hi", "jh_ha");
         // close doc ...
         result.append("\t</doc>\n");
 //        result.append("</add>");
@@ -145,10 +145,10 @@ public class AddImages {
 
     private static void getFields(BufferedImage img, StringBuilder result, LireFeature feature, String histogramField, String hashesField) {
         feature.extract(img);
-        result.append("\t\t<field name=\"").append(histogramField).append("\">");
+        result.append("\t\t<field name=\"" + histogramField + "\">");
         result.append(Base64.encodeBase64String(feature.getByteArrayRepresentation()));
         result.append("</field>\n");
-        result.append("\t\t<field name=\"").append(hashesField).append("\">");
+        result.append("\t\t<field name=\"" + hashesField + "\">");
         result.append(SerializationUtils.arrayToString(BitSampling.generateHashes(feature.getDoubleHistogram())));
         result.append("</field>\n");
     }
