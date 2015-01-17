@@ -14,20 +14,20 @@ public class MirFlickrImageDataProcessor implements ImageDataProcessor {
     @Override
     public CharSequence getTitle(String filename) {
 //        return filename.replace("G:\\", "").replaceAll("\\\\", "/");
-        return filename.replace("testdata/ferrari/", "").replaceAll("\\\\", "/");
+        return filename.replace("testdata/flickrphotos/", "").replaceAll("\\\\", "/");
     }
 
     @Override
     public CharSequence getIdentifier(String filename) {
 //        return filename.replace("G:\\", "").replaceAll("\\\\", "/");
-        return filename.replace("testdata/ferrari/", "").replaceAll("\\\\", "/");
+        return filename.replace("testdata/flickrphotos/", "").replaceAll("\\\\", "/");
     }
 
     @Override
     public CharSequence getAdditionalFields(String filename) {
         StringBuilder sb = new StringBuilder(1024);
         int fileNumber = Integer.parseInt(filename.substring(filename.lastIndexOf("\\")).replaceAll("[^0-9]", "")) - 1;
-        String tagFileName = "testdata/ferrari/tags_raw\\" + (fileNumber/10000) + "\\" + fileNumber + ".txt";
+        String tagFileName = "testdata/flickrphotos_tags_raw/" + (fileNumber/10000) + "\\" + fileNumber + ".txt";
 //        String tagFileName = filename.substring(0, filename.lastIndexOf("\\")) + "\\" + fileNumber + ".txt";
         try {
             sb.append("<field name=\"tags\">");

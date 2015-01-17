@@ -20,16 +20,17 @@ public class PreprocessingTest extends TestCase {
 
     public void testSingleImage() throws IOException {
         String num = "1031";
-        File file = new File("testdata/"+num+".tif");
+        File file = new File("testdata/" + num + ".tif");
         BufferedImage read = ImageIO.read(file);
         BufferedImage img = ImageUtils.createWorkingCopy(read);
         // despeckle
         DespeckleFilter df = new DespeckleFilter();
         img = df.filter(img, null);
         img = ImageUtils.trimWhiteSpace(img); // trims white space
-        if (maxSideLength > 50)
+        if (maxSideLength > 50) {
             img = ImageUtils.scaleImage(img, maxSideLength);
+        }
 
-        ImageIO.write(img, "png", new File("testdata/"+num+".png"));
+        ImageIO.write(img, "png", new File("testdata/" + num + ".png"));
     }
 }

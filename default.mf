@@ -1,4 +1,4 @@
-Build-Date: 16.01.2015 08:29 PM
-Build-Number: 469
+Build-Date: 17.01.2015 01:21 AM
+Build-Number: 478
 Class-Path: lib/opencv-249.jar lib/lire.jar lib/commons-codec-1.9.jar lib/jhlabs.jar lib/imageio/common-image-3.0.jar lib/imageio/common-io-3.0.jar lib/imageio/common-lang-3.0.jar lib/imageio/imageio-core-3.0.jar lib/imageio/imageio-jpeg-3.0.jar lib/imageio/imageio-metadata-3.0.jar lib/imageio/imageio-tiff-3.0.jar lib/jopensurf.jar
 Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer

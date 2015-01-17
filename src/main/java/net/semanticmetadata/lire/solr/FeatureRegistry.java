@@ -6,6 +6,7 @@ import net.semanticmetadata.lire.imageanalysis.spatialpyramid.SPCEDD;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import net.semanticmetadata.lire.imageanalysis.mser.MSERFeature;
 
 /**
  * This file is part of LIRE Solr, a Java library for content based image retrieval.
@@ -16,14 +17,14 @@ public class FeatureRegistry {
     /**
      * Naming conventions for code: 2 letters for global features. More for local ones.
      */
-    private static HashMap<String, Class<? extends LireFeature>> codeToClass = new HashMap<String, Class<? extends LireFeature>>(16);
+    private static HashMap<String, Class<? extends LireFeature>> codeToClass = new HashMap<String, Class<? extends LireFeature>>(19);
     /**
      * Caching the entries for fast retrieval or Strings without generating new objects.
      */
-    private static HashMap<String, Class<? extends LireFeature>> hashFieldToClass = new HashMap<String, Class<? extends LireFeature>>(16);
-    private static HashMap<String, Class<? extends LireFeature>> featureFieldToClass = new HashMap<String, Class<? extends LireFeature>>(16);
-    private static HashMap<String, String> hashFieldToFeatureField = new HashMap<String, String>(16);
-    private static HashMap<Class<? extends LireFeature>, String> classToCode = new HashMap<Class<? extends LireFeature>, String>(16);
+    private static HashMap<String, Class<? extends LireFeature>> hashFieldToClass = new HashMap<String, Class<? extends LireFeature>>(19);
+    private static HashMap<String, Class<? extends LireFeature>> featureFieldToClass = new HashMap<String, Class<? extends LireFeature>>(19);
+    private static HashMap<String, String> hashFieldToFeatureField = new HashMap<String, String>(19);
+    private static HashMap<Class<? extends LireFeature>, String> classToCode = new HashMap<Class<? extends LireFeature>, String>(19);
 
 
     // Constants.
@@ -53,6 +54,13 @@ public class FeatureRegistry {
 
         // add your features here if you want more.
         // ....
+        codeToClass.put("ll", LuminanceLayout.class);
+        codeToClass.put("ta", Tamura.class);
+        codeToClass.put("ga", Gabor.class);
+        codeToClass.put("jpe_ch", JpegCoefficientHistogram.class);
+        codeToClass.put("mse_ce", MSERFeature.class);
+        codeToClass.put("sur_ce", SurfFeature.class);
+        
 
         // -----< caches to be filled >----------------
 

@@ -75,8 +75,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  * TODO: Make feature list change-able
  * <p/>
  * You then basically need to enrich the file with whatever metadata you prefer and send it to Solr using for instance curl:
- * <pre>curl http://localhost:9000/solr/lire/update  -H "Content-Type: text/xml" --data-binary @extracted_file.xml
- * curl http://localhost:9000/solr/lire/update  -H "Content-Type: text/xml" --data-binary "<commit/>"</pre>
+ * <pre>curl http://localhost:8983/solr/media_shard1_replica1/update  -H "Content-Type: text/xml" --data-binary @extracted_file.xml
+ * curl http://localhost:8983/solr/media_shard1_replica1/update  -H "Content-Type: text/xml" --data-binary "<commit/>"</pre>
  *
  * @author Mathias Lux, mathias@juggle.at on  13.08.2013
  */
@@ -157,7 +157,7 @@ public class ParallelSolrIndexer implements Runnable {
                         Class<?> imageDataProcessorClass = Class.forName(args[i + 1]);
                         if (imageDataProcessorClass.newInstance() instanceof ImageDataProcessor)
                             e.setImageDataProcessor(imageDataProcessorClass);
-                    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e1) {
+                    } catch (Exception e1) {
                         System.err.println("Did not find imageProcessor class: " + e1.getMessage());
                         printHelp();
                         System.exit(0);
@@ -328,17 +328,20 @@ public class ParallelSolrIndexer implements Runnable {
 //            writer.close();
 //            threadFinished = true;
 
-        } catch (IOException | InterruptedException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
     }
 
     private void addFeatures(List features) {
-        for (Class next : listOfFeatures) {
+        for (Iterator<Class> iterator = listOfFeatures.iterator(); iterator.hasNext(); ) {
+            Class next = iterator.next();
             try {
                 features.add(next.newInstance());
-            } catch (InstantiationException | IllegalAccessException e) {
+            } catch (InstantiationException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
         }
@@ -396,7 +399,7 @@ public class ParallelSolrIndexer implements Runnable {
                         fis.read(buffer);
                         String path = next.getCanonicalPath();
                         images.put(new WorkItem(path, buffer));
-                    } catch (IOException | InterruptedException e) {
+                    } catch (Exception e) {
                         System.err.println("Could not read image " + file + ": " + e.getMessage());
                     }
                 }
@@ -481,7 +484,7 @@ public class ParallelSolrIndexer implements Runnable {
                             if (imageDataProcessor != null) {
                                 idp = (ImageDataProcessor) imageDataProcessor.newInstance();
                             }
-                        } catch (InstantiationException | IllegalAccessException e) {
+                        } catch (Exception e) {
                             System.err.println("Could not instantiate ImageDataProcessor!");
                             e.printStackTrace();
                         }
@@ -539,7 +542,7 @@ public class ParallelSolrIndexer implements Runnable {
 //                            dos.write(buffer.toString().getBytes());
 //                        }
 //                    }
-                } catch (InterruptedException | IOException e) {
+                } catch (Exception e) {
                     System.err.println("Error processing file " + tmp.getFileName());
                     e.printStackTrace();
                 }
