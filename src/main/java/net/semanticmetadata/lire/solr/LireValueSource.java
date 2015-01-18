@@ -94,9 +94,7 @@ public class LireValueSource extends ValueSource {
                 } else {
                     System.err.println("Feature " + field + " is not registered.");
                 }
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
+            } catch (InstantiationException | IllegalAccessException e) {
                 e.printStackTrace();
             }
         }

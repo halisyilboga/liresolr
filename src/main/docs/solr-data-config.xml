@@ -7,7 +7,7 @@
             <entity name="f"
                     processor="FileListEntityProcessor"
                     transformer="TemplateTransformer"
-                    baseDir="/data/digitalcandy/ml/images/"
+                    baseDir="D:\Java\Projects\Lire\testdata\wang-1000\"
                     fileName=".*jpg"
                     recursive="true"
                     rootEntity="false" dataSource="null" onError="skip">

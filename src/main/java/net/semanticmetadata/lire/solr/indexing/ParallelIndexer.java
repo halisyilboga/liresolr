@@ -65,6 +65,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
+import net.semanticmetadata.lire.impl.SiftDocumentBuilder;
 import net.semanticmetadata.lire.impl.SurfDocumentBuilder;
 import net.semanticmetadata.lire.indexing.parallel.WorkItem;
 
@@ -274,6 +275,7 @@ public class ParallelIndexer implements Runnable {
         builder.addBuilder(DocumentBuilderFactory.getLuminanceLayoutDocumentBuilder());
         builder.addBuilder(DocumentBuilderFactory.getPHOGDocumentBuilder());
         builder.addBuilder(new SurfDocumentBuilder());
+        builder.addBuilder(new SiftDocumentBuilder());
 
 //        builder.addBuilder(DocumentBuilderFactory.getCEDDDocumentBuilder());
 //        builder.addBuilder(DocumentBuilderFactory.getFCTHDocumentBuilder());

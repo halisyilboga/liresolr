@@ -72,7 +72,7 @@ public class AddImagesFromDataFile {
 //        BitSampling.readHashFunctions(new FileInputStream("LshBitSampling.obj"));
         BitSampling.readHashFunctions();
         AddImagesFromDataFile a = new AddImagesFromDataFile();
-        a.createXml(new File("testdata"), new File("out.txt"));
+        a.createXml(new File("testdata/small/"), new File("testdata/small/1/img01.jpg"));
     }
 
     public void createXml(File outDirectory, File inputFile) throws IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {

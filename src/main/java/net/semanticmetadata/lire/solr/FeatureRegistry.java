@@ -57,8 +57,8 @@ public class FeatureRegistry {
         codeToClass.put("ll", LuminanceLayout.class);
         codeToClass.put("ta", Tamura.class);
         codeToClass.put("ga", Gabor.class);
-        codeToClass.put("jpe_ch", JpegCoefficientHistogram.class);
-        codeToClass.put("mse_ce", MSERFeature.class);
+        codeToClass.put("jpe_ce", JpegCoefficientHistogram.class);
+        codeToClass.put("msr_ce", MSERFeature.class);
         codeToClass.put("sur_ce", SurfFeature.class);
         
 
