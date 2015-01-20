@@ -45,9 +45,9 @@ public class LireEntityProcessor extends EntityProcessorBase {
       new JpegCoefficientHistogram(),
       new SimpleColorHistogram(),
       new LocalBinaryPatterns(),
-      //new RotationInvariantLocalBinaryPatterns(),
+      new RotationInvariantLocalBinaryPatterns(),
       new BinaryPatternsPyramid()};
-      protected static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(17);
+      protected static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(18);
       int count = 0;
 
       static {
@@ -67,7 +67,7 @@ public class LireEntityProcessor extends EntityProcessorBase {
         classToPrefix.put(JpegCoefficientHistogram.class, "jp");
         classToPrefix.put(SimpleColorHistogram.class, "si");
         classToPrefix.put(LocalBinaryPatterns.class, "lo");
-        //classToPrefix.put(RotationInvariantLocalBinaryPatterns.class, "ro");
+        classToPrefix.put(RotationInvariantLocalBinaryPatterns.class, "ro");
         classToPrefix.put(BinaryPatternsPyramid.class, "bi");
       }
 

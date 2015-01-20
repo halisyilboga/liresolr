@@ -54,7 +54,7 @@ import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
  * @author Mathias Lux, mathias@juggle.at, 08.07.13
  */
 public class AddImagesFromDataFile {
-    private static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(5);
+    private static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(17);
 
     static {
         classToPrefix.put(ColorLayout.class, "cl");

@@ -119,6 +119,7 @@ public class ParallelSolrIndexer implements Runnable {
         listOfFeatures.add(JpegCoefficientHistogram.class);
         listOfFeatures.add(SimpleColorHistogram.class);
         listOfFeatures.add(LocalBinaryPatterns.class);
+        listOfFeatures.add(RotationInvariantLocalBinaryPatterns.class);
     }
 
     /**
@@ -169,7 +170,7 @@ public class ParallelSolrIndexer implements Runnable {
                         Class<?> imageDataProcessorClass = Class.forName(args[i + 1]);
                         if (imageDataProcessorClass.newInstance() instanceof ImageDataProcessor)
                             e.setImageDataProcessor(imageDataProcessorClass);
-                    } catch (Exception e1) {
+                    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e1) {
                         System.err.println("Did not find imageProcessor class: " + e1.getMessage());
                         printHelp();
                         System.exit(0);
@@ -340,7 +341,7 @@ public class ParallelSolrIndexer implements Runnable {
 //            writer.close();
 //            threadFinished = true;
 
-        } catch (Exception e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
 
@@ -351,9 +352,7 @@ public class ParallelSolrIndexer implements Runnable {
             Class next = iterator.next();
             try {
                 features.add(next.newInstance());
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
+            } catch (InstantiationException | IllegalAccessException e) {
                 e.printStackTrace();
             }
         }
@@ -496,7 +495,7 @@ public class ParallelSolrIndexer implements Runnable {
                             if (imageDataProcessor != null) {
                                 idp = (ImageDataProcessor) imageDataProcessor.newInstance();
                             }
-                        } catch (Exception e) {
+                        } catch (InstantiationException | IllegalAccessException e) {
                             System.err.println("Could not instantiate ImageDataProcessor!");
                             e.printStackTrace();
                         }
@@ -554,7 +553,7 @@ public class ParallelSolrIndexer implements Runnable {
 //                            dos.write(buffer.toString().getBytes());
 //                        }
 //                    }
-                } catch (Exception e) {
+                } catch (InterruptedException | IOException e) {
                     System.err.println("Error processing file " + tmp.getFileName());
                     e.printStackTrace();
                 }
