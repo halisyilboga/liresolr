@@ -41,6 +41,7 @@ package net.semanticmetadata.lire.solr;
 
 import com.jhlabs.image.DespeckleFilter;
 import net.semanticmetadata.lire.imageanalysis.*;
+import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
 import net.semanticmetadata.lire.indexing.hashing.BitSampling;
 import net.semanticmetadata.lire.indexing.parallel.WorkItem;
 import net.semanticmetadata.lire.solr.indexing.ImageDataProcessor;
@@ -102,11 +103,22 @@ public class ParallelSolrIndexer implements Runnable {
     public ParallelSolrIndexer() {
         // default constructor.
         listOfFeatures = new HashSet<Class>();
-        listOfFeatures.add(PHOG.class);
         listOfFeatures.add(ColorLayout.class);
         listOfFeatures.add(EdgeHistogram.class);
+        listOfFeatures.add(PHOG.class);
         listOfFeatures.add(JCD.class);
-
+        listOfFeatures.add(CEDD.class);
+        listOfFeatures.add(ScalableColor.class);
+        listOfFeatures.add(OpponentHistogram.class);
+        listOfFeatures.add(FCTH.class);
+        listOfFeatures.add(FuzzyOpponentHistogram.class);
+        listOfFeatures.add(JointHistogram.class);
+        listOfFeatures.add(Gabor.class);
+        listOfFeatures.add(Tamura.class);
+        listOfFeatures.add(LuminanceLayout.class);
+        listOfFeatures.add(JpegCoefficientHistogram.class);
+        listOfFeatures.add(SimpleColorHistogram.class);
+        listOfFeatures.add(LocalBinaryPatterns.class);
     }
 
     /**

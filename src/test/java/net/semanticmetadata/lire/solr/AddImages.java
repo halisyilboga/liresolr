@@ -82,18 +82,18 @@ import java.util.List;
 // <delete><query>id:*</query></delete>
 
 public class AddImages {
-    static String baseURL = "http://localhost:9000/solr/lire";
+    static String baseURL = "http://localhost:8983/solr/media_shard1_replica1";
 
     public static void main(String[] args) throws IOException, InterruptedException {
         BitSampling.readHashFunctions();
         LinkedList<Thread> threads = new LinkedList<Thread>();
-        for (int j = 10; j<21; j++) {
+        for (int j = 1; j<3; j++) {
             final int tz = j;
             Thread t = new Thread(){
                 @Override
                 public void run() {
                     try {
-                        List<File> files = FileUtils.getAllImageFiles(new File("D:\\DataSets\\WIPO-US\\jpg_us_trim\\"+tz), true);
+                        List<File> files = FileUtils.getAllImageFiles(new File("testdata/smal/"+tz), true);
                         int count = 0;
                         BufferedWriter br = new BufferedWriter(new FileWriter("add-us-"+tz+".xml", false));
                         br.write("<add>\n");

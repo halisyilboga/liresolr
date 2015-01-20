@@ -30,7 +30,7 @@ public class DecodingTest extends TestCase {
         p.setByteArrayRepresentation(bytes);
         System.out.println(Arrays.toString(p.getDoubleHistogram()));
 
-        BufferedImage img = ImageIO.read(new File("testdata/ferrari/black/2828686873_2fa36f83d7_b.jpg"));
+        BufferedImage img = ImageIO.read(new File("/data/digitalcandy/ml/images/im190001.jpg"));
 //        BufferedImage img = ImageIO.read(new File("test.jpg"));
         PHOG g = new PHOG();
         g.extract(img);
@@ -47,7 +47,7 @@ public class DecodingTest extends TestCase {
     public void testEncodeImage() throws IOException {
         BitSampling.readHashFunctions();
         ColorLayout cl = new ColorLayout();
-        cl.extract(ImageIO.read(new File("testdata/ferrari/black/2828686873_2fa36f83d7_b.jpg")));
+        cl.extract(ImageIO.read(new File("/data/digitalcandy/ml/images/im190001.jpg")));
         int[] ints = BitSampling.generateHashes(cl.getDoubleHistogram());
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < ints.length; i++) {

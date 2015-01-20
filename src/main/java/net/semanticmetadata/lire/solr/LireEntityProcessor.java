@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
 
 import static org.apache.solr.handler.dataimport.DataImportHandlerException.SEVERE;
 import static org.apache.solr.handler.dataimport.DataImportHandlerException.wrapAndThrow;
@@ -28,18 +29,47 @@ import static org.apache.solr.handler.dataimport.XPathEntityProcessor.URL;
 public class LireEntityProcessor extends EntityProcessorBase {
     protected boolean done = false;
     protected LireFeature[] listOfFeatures = new LireFeature[]{
-            new ColorLayout(), new PHOG(), new EdgeHistogram(), new JCD(), new OpponentHistogram()
-    };
-    protected static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(5);
-    int count = 0;
+      new ColorLayout(),
+      new EdgeHistogram(),
+      new PHOG(),
+      new JCD(),
+      new CEDD(),
+      new ScalableColor(),
+      new OpponentHistogram(),
+      new FCTH(),
+      new FuzzyOpponentHistogram(),
+      new JointHistogram(),
+      new Gabor(),
+      new Tamura(),
+      new LuminanceLayout(),
+      new JpegCoefficientHistogram(),
+      new SimpleColorHistogram(),
+      new LocalBinaryPatterns(),
+      //new RotationInvariantLocalBinaryPatterns(),
+      new BinaryPatternsPyramid()};
+      protected static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(17);
+      int count = 0;
 
-    static {
+      static {
         classToPrefix.put(ColorLayout.class, "cl");
         classToPrefix.put(EdgeHistogram.class, "eh");
         classToPrefix.put(PHOG.class, "ph");
-        classToPrefix.put(OpponentHistogram.class, "oh");
         classToPrefix.put(JCD.class, "jc");
-    }
+        classToPrefix.put(CEDD.class, "ce");
+        classToPrefix.put(ScalableColor.class, "sc");
+        classToPrefix.put(OpponentHistogram.class, "oh");
+        classToPrefix.put(FCTH.class, "fc");
+        classToPrefix.put(FuzzyOpponentHistogram.class, "fo");
+        classToPrefix.put(JointHistogram.class, "jh");
+        classToPrefix.put(Gabor.class, "ga");
+        classToPrefix.put(Tamura.class, "ta");
+        classToPrefix.put(LuminanceLayout.class, "ll");
+        classToPrefix.put(JpegCoefficientHistogram.class, "jp");
+        classToPrefix.put(SimpleColorHistogram.class, "si");
+        classToPrefix.put(LocalBinaryPatterns.class, "lo");
+        //classToPrefix.put(RotationInvariantLocalBinaryPatterns.class, "ro");
+        classToPrefix.put(BinaryPatternsPyramid.class, "bi");
+      }
 
 
     protected void firstInit(Context context) {
