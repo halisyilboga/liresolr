@@ -55,7 +55,7 @@ import org.apache.solr.search.ValueSourceParser;
  * <valueSourceParser name="lirefunc" class="net.semanticmetadata.lire.solr.LireValueSourceParser" /></p>
  *
  * <p>To use the function getting a distance to a reference image use it like:<br/>
- * http://localhost:8983/solr/media_shard1_replica1/select?q=*:*&fl=id,lirefunc(cl,"FQY5DhMYDg0ODg0PEBEPDg4ODg8QEgsgEBAQEBAgEBAQEBA%3D")<br/>
+ * http://localhost:9000/solr/lire/select?q=*:*&fl=id,lirefunc(cl,"FQY5DhMYDg0ODg0PEBEPDg4ODg8QEgsgEBAQEBAgEBAQEBA%3D")<br/>
  * The first parameter gives the field (cl, ph, eh, or jc), the second gives the byte[] representation of the
  * histogram in Base64 encoding</p>
  *

@@ -242,7 +242,7 @@ public class LireRequestHandler extends RequestHandlerBase {
             feat.extract(img);
             hashes = BitSampling.generateHashes(feat.getDoubleHistogram());
             termFilter = createTermFilter(hashes, paramField);
-        } catch (Exception e) {
+        } catch (IOException | InstantiationException | IllegalAccessException e) {
             rsp.add("Error", "Error reading image from URL: " + paramUrl + ": " + e.getMessage());
             e.printStackTrace();
         }
@@ -283,7 +283,7 @@ public class LireRequestHandler extends RequestHandlerBase {
             rsp.add("hashes", hashStrings);
 //            just use 50% of the hashes for search ...
 //            query = createTermFilter(hashes, paramField, 0.5d);
-        } catch (Exception e) {
+        } catch (IOException | InstantiationException | IllegalAccessException e) {
 //            rsp.add("Error", "Error reading image from URL: " + paramUrl + ": " + e.getMessage());
             e.printStackTrace();
         }

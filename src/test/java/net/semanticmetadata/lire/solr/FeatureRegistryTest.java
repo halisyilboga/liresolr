@@ -30,6 +30,5 @@ public class FeatureRegistryTest extends TestCase {
         System.out.println("sc_ha => " + FeatureRegistry.getFeatureFieldName("sc_ha"));
         System.out.println("ph_ha => " + FeatureRegistry.getFeatureFieldName("ph_ha"));
         System.out.println("ce_ha => " + FeatureRegistry.getFeatureFieldName("ce_ha"));
-        System.out.println("msr_ce_ha => " + FeatureRegistry.getFeatureFieldName("msr_ce_ha"));
     }
 }

@@ -15,4 +15,4 @@ def step((ext, seed_path), dirname, names):
  
     
 if __name__ == "__main__" :
-    run('/Users/ferdous/code/java/lire-trunk/samples/liredemo/flickrphotos')  
+    run()  
