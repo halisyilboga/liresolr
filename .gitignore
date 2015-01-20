@@ -18,5 +18,5 @@ liresolr.iml
 /build/
 /logs/
 docs.xml
-out.txt
+out.*
 *.log
