@@ -410,7 +410,7 @@ public class ParallelSolrIndexer implements Runnable {
                         fis.read(buffer);
                         String path = next.getCanonicalPath();
                         images.put(new WorkItem(path, buffer));
-                    } catch (Exception e) {
+                    } catch (IOException | InterruptedException e) {
                         System.err.println("Could not read image " + file + ": " + e.getMessage());
                     }
                 }
@@ -516,6 +516,14 @@ public class ParallelSolrIndexer implements Runnable {
                         if (idp != null)
                             sb.append(idp.getAdditionalFields(tmp.getFileName()));
 
+                        
+                        sb.append("<field name=\"width\">");
+                        sb.append(img.getWidth());
+                        sb.append("</field>");
+                        sb.append("<field name=\"height\">");
+                        sb.append(img.getHeight());
+                        sb.append("</field>");
+                        
                         for (LireFeature feature : features) {
                             String featureCode = FeatureRegistry.getCodeForClass(feature.getClass());
                             if (featureCode != null) {
