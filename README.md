@@ -28,17 +28,29 @@ Preliminaries
 -------------
 Supported values for feature field parameters, e.g. lireq?field=cl_ha:
 
--  **cl_ha** .. ColorLayout
--  **ph_ha** .. PHOG
--  **oh_ha** .. OpponentHistogram
--  **eh_ha** .. EdgeHistogram
--  **jc_ha** .. JCD
 -  **ce_ha** .. CEDD
 -  **sc_ha** .. ScalableColor
+-  **cl_ha** .. ColorLayout
+-  **ph_ha** .. PHOG
+-  **eh_ha** .. Edges
+-  **oh_ha** .. Opponents
+-  **jc_ha** .. JCD
+-  **fc_ha** .. FCTH
+-  **fo_ha** .. FuzzyOpponentHistogram
+-  **jh_ha** .. JointHistogram
+-  **su_ha** .. Surf
+-  **ga_ha** .. Gabor
+-  **ta_ha** .. Tamura
+-  **ll_ha** .. LuminanceLayout
+-  **jp_ha** .. JpegCoefficientHistogram
+-  **si_ha** .. SimpleColor
+-  **lo_ha** .. LocalBinaryPatterns
+-  **ro_ha** .. RotationInvariantLocalBinaryPatterns
+-  **bi_ha** .. BinaryPatternsPyramid
 
 The field parameter (partially) works with the LIRE request handler:
 
--  **fl** .. Fields, give them as a comma or space separated list, like "fl=title,id,score". Note that "*" is denoting all fields and score adds the distance (which already comes with the "d" fields) in an additional score field.
+-  **fl** .. Fields, give them as a comma or space separated list, like "fl=title,id,score" or "fl=*,score". Note that "*" is denoting all fields and score adds the distance (which already comes with the "d" fields) in an additional score field.
 -  **fq** .. Filter query, give them as a comma separated list in the format "fq=tags:dog tags:funny". No wildcards and no spaces in terms supported for now.
 
 Getting random images
@@ -116,27 +128,73 @@ Use of the request handler is detailed above.
 You'll also need the respective fields in the schema.xml file:
 
     <fields>
-       <!-- file path for ID -->
-       <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" />
-       <!-- the sole file name -->
-       <field name="title" type="text_general" indexed="true" stored="true" multiValued="true"/>
-       <!-- Edge Histogram -->
-       <field name="eh_ha" type="text_ws" indexed="true" stored="false" required="false"/>
-       <field name="eh_hi" type="binaryDV"  indexed="false" stored="true" required="false"/>
-       <!-- ColorLayout -->
-       <field name="cl_ha" type="text_ws" indexed="true" stored="false" required="false"/>
-       <field name="cl_hi" type="binaryDV"  indexed="false" stored="true" required="false"/>
-       <!-- PHOG -->
-       <field name="ph_ha" type="text_ws" indexed="true" stored="false" required="false"/>
-       <field name="ph_hi" type="binaryDV"  indexed="false" stored="true" required="false"/>
-       <!-- JCD -->
-       <field name="jc_ha" type="text_ws" indexed="true" stored="false" required="false"/>
-       <field name="jc_hi" type="binaryDV"  indexed="false" stored="true" required="false"/>
-       <!-- OpponentHistogram -->
-       <!--field name="oh_ha" type="text_ws" indexed="true" stored="false" required="false"/-->
-       <!--field name="oh_hi" type="binaryDV"  indexed="false" stored="true" required="false"/-->
-       <!-- Needed for SOLR -->
-       <field name="_version_" type="long" indexed="true" stored="true"/>
+		<!-- file path for ID -->
+		<field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" />
+		<!-- the sole file name -->
+		<field name="title" type="text_general" indexed="true" stored="true" multiValued="true"/>
+		<!-- Needed for SOLR -->
+		<field name="_version_" type="long" indexed="true" stored="true"/>
+	   	<!-- Edge Histogram -->
+		<field indexed="true" name="eh_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="eh_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- ColorLayout -->
+		<field indexed="true" name="cl_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="cl_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- PHOG -->
+		<field indexed="true" name="ph_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="ph_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- JCD -->
+		<field indexed="true" name="jc_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="jc_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- OpponentHistogram -->
+		<field indexed="true" name="oh_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="oh_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- CEDD -->
+		<field indexed="true" name="ce_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="ce_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- ScalableColor -->
+		<field indexed="true" name="sc_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="sc_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- SURF -->
+		<field indexed="true" name="su_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="su_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- FCTH -->
+		<field indexed="true" name="fc_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="fc_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- FuzzyOpponentHistogram -->
+		<field indexed="true" name="fo_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="fo_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- JointHistogram -->
+		<field indexed="true" name="jh_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="jh_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- SimpleColor -->    
+		<field indexed="true" name="si_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="si_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- LocalBinaryPatterns -->
+		<field indexed="true" name="lo_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="lo_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- LuminanceLayout -->
+		<field indexed="true" name="ll_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="ll_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- JpegCoefficientHistogram -->
+		<field indexed="true" name="jp_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="jp_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- Gabor -->
+		<field indexed="true" name="ga_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="ga_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- Tamura -->
+		<field indexed="true" name="ta_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="ta_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- RotationInvariantLocalBinaryPatterns -->
+		<field indexed="true" name="ro_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="ro_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- BinaryPatternsPyramid -->
+		<field indexed="true" name="bi_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="bi_hi" required="false" stored="true" type="binaryDV"/>
+
+		<field indexed="true" name="width" stored="true" type="int"/>
+		<field indexed="true" name="height" stored="true" type="int"/>
+		<field indexed="true" multiValued="false" name="timestamp" required="false" stored="true" type="tdate" default="NOW"/>
     </fields>
 
 Do not forget to add the custom field at the very same file:
@@ -159,20 +217,20 @@ Note that if you send the parameters using an URL you might take extra care of t
 
 Examples:
 
--  [solrurl]/select?q=*:*&fl=id,lirefunc(cl,"FQY5DhMYDg...AQEBA=") – adding the distance to the reference image to the results
--  [solrurl]/select?q=*:*&sort=lirefunc(cl,"FQY5DhMYDg...AQEBA=")+asc – sorting the results based on the distance to the reference image
+-  [solrurl]/select?q=*:*&fl=id,lirefunc(cl,"FQY5DhMYDg...AQEBA=** .. – adding the distance to the reference image to the results
+-  [solrurl]/select?q=*:*&sort=lirefunc(cl,"FQY5DhMYDg...AQEBA=** ..+asc – sorting the results based on the distance to the reference image
 
 If you extract the features yourself, use code like his one:
 
     // ColorLayout
     ColorLayout cl = new ColorLayout();
-    cl.extract(ImageIO.read(new File("...")));
+    cl.extract(ImageIO.read(new File("...** ..));
     String arg1 = "cl";
     String arg2 = Base64.encode(cl.getByteArrayRepresentation());
 
     // PHOG
     PHOG ph = new PHOG();
-    ph.extract(ImageIO.read(new File("...")));
+    ph.extract(ImageIO.read(new File("...** ..));
     String arg1 = "ph";
     String arg2 = Base64.encode(ph.getByteArrayRepresentation());
 
