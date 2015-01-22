@@ -1,5 +1,5 @@
-Build-Date: 22.01.2015 02:26 AM
-Build-Number: 288
+Build-Date: 22.01.2015 09:39 PM
+Build-Number: 305
 Class-Path: lib/commons-codec-1.9.jar lib/jhlabs.jar lib/common-image-3.0.jar lib/common-io-3.0.jar  lib/common-lang-3.0.jar  lib/imageio-core-3.0.jar  lib/imageio-jpeg-3.0.jar  lib/imageio-metadata-3.0.jar  lib/imageio-tiff-3.0.jar
 Main-Class: net.semanticmetadata.lire.solr.ParallelSolrIndexer
         
