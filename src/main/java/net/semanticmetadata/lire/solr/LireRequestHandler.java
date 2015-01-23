@@ -1,7 +1,6 @@
 package net.semanticmetadata.lire.solr;
 
-import net.semanticmetadata.lire.imageanalysis.EdgeHistogram;
-import net.semanticmetadata.lire.imageanalysis.LireFeature;
+import net.semanticmetadata.lire.imageanalysis.*;
 import net.semanticmetadata.lire.impl.SimpleResult;
 import net.semanticmetadata.lire.indexing.hashing.BitSampling;
 import net.semanticmetadata.lire.utils.ImageUtils;

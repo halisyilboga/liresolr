@@ -1,9 +1,10 @@
 *.class
 testdata
-idx-test
+idx-*
 # Package Files #
 *.jar
 *.war
+*.dat
 *.ear
 data
 solrdocs

@@ -46,7 +46,9 @@ public class LireEntityProcessor extends EntityProcessorBase {
       new SimpleColorHistogram(),
       new LocalBinaryPatterns(),
       new RotationInvariantLocalBinaryPatterns(),
-      new BinaryPatternsPyramid()};
+      new BinaryPatternsPyramid()
+    };
+    
       protected static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(18);
       int count = 0;
 
