@@ -9,10 +9,8 @@ package net.semanticmetadata.lire.solr;
  *
  * @author ferdous
  */
-
 import net.semanticmetadata.lire.DocumentBuilderFactory;
-import net.semanticmetadata.lire.imageanalysis.CEDD;
-import net.semanticmetadata.lire.imageanalysis.OpponentHistogram;
+import net.semanticmetadata.lire.imageanalysis.*;
 import net.semanticmetadata.lire.imageanalysis.bovw.SimpleFeatureBOVWBuilder;
 import net.semanticmetadata.lire.impl.ChainedDocumentBuilder;
 import net.semanticmetadata.lire.impl.GenericDocumentBuilder;
@@ -37,20 +35,24 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
+import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
 import net.semanticmetadata.lire.indexing.parallel.WorkItem;
 
 /**
- * This class allows for creating indexes in a parallel manner. The class
- * at hand reads files from the disk and acts as producer, while several consumer
+ * This class allows for creating indexes in a parallel manner. The class at
+ * hand reads files from the disk and acts as producer, while several consumer
  * threads extract the features from the given files.
  * <p/>
- * To use this override the method {@link ParallelFullSolrIndexer#addBuilders} to add your own features.
- * Check the source of this class -- the main method -- to get an idea.
+ * To use this override the method {@link ParallelFullSolrIndexer#addBuilders}
+ * to add your own features. Check the source of this class -- the main method
+ * -- to get an idea.
  *
  * @author Mathias Lux, mathias@juggle.at, 15.04.13
  */
 public class ParallelFullSolrIndexer implements Runnable {
+
     private Logger log = Logger.getLogger(this.getClass().getName());
+    private final int maxCacheSize = 100;
     private int numberOfThreads = 10;
     private String indexPath;
     private String imageDirectory;
@@ -64,7 +66,15 @@ public class ParallelFullSolrIndexer implements Runnable {
     private IndexWriterConfig.OpenMode openMode = IndexWriterConfig.OpenMode.CREATE_OR_APPEND;
     // all xx seconds a status message will be displayed
     private final int monitoringInterval = 10;
-    private LinkedBlockingQueue<WorkItem> queue = new LinkedBlockingQueue<WorkItem>(100);
+    private LinkedBlockingQueue<WorkItem> queue = new LinkedBlockingQueue<WorkItem>(maxCacheSize);
+
+    OutputStream dos = null;
+    File fileList = null;
+    File outFile = null;
+    private int maxSideLength = 768;
+    private boolean isPreprocessing = true;
+    private Class imageDataProcessor = null;
+    private static boolean individualFiles = false;
 
     public static void main(String[] args) {
         String indexPath = null;
@@ -116,17 +126,17 @@ public class ParallelFullSolrIndexer implements Runnable {
                 public void addBuilders(ChainedDocumentBuilder builder) {
                     builder.addBuilder(new GenericDocumentBuilder(CEDD.class, false));
                     builder.addBuilder(new GenericDocumentBuilder(OpponentHistogram.class, false));
-//                    builder.addBuilder(new GenericDocumentBuilder(PHOG.class, true));
-//                    builder.addBuilder(new GenericDocumentBuilder(JCD.class, true));
-//                    builder.addBuilder(new GenericDocumentBuilder(OpponentHistogram.class, true));
-//                    builder.addBuilder(new GenericDocumentBuilder(JointHistogram.class, true));
-//                    builder.addBuilder(new GenericDocumentBuilder(ColorLayout.class, true));
-//                    builder.addBuilder(new GenericDocumentBuilder(EdgeHistogram.class, true));
-//                    builder.addBuilder(new GenericDocumentBuilder(SimpleColorHistogram.class, true));
-//                    builder.addBuilder(new GenericDocumentBuilder(AutoColorCorrelogram.class, true));
+                    builder.addBuilder(new GenericDocumentBuilder(PHOG.class, true));
+                    builder.addBuilder(new GenericDocumentBuilder(JCD.class, true));
+                    builder.addBuilder(new GenericDocumentBuilder(OpponentHistogram.class, true));
+                    builder.addBuilder(new GenericDocumentBuilder(JointHistogram.class, true));
+                    builder.addBuilder(new GenericDocumentBuilder(ColorLayout.class, true));
+                    builder.addBuilder(new GenericDocumentBuilder(EdgeHistogram.class, true));
+                    builder.addBuilder(new GenericDocumentBuilder(SimpleColorHistogram.class, true));
+                    //builder.addBuilder(new GenericDocumentBuilder(AutoColorCorrelogram.class, true));
 
                     builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.CVSURF));
-//                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.CVSIFT));
+                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.CVSIFT));
 //                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.Random, 100));
 //                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.GaussRandom));
                 }
@@ -138,46 +148,37 @@ public class ParallelFullSolrIndexer implements Runnable {
                 public void addBuilders(ChainedDocumentBuilder builder) {
                     builder.addBuilder(new GenericDocumentBuilder(CEDD.class, false));
                     builder.addBuilder(new GenericDocumentBuilder(OpponentHistogram.class, false));
-//                    builder.addBuilder(new GenericDocumentBuilder(PHOG.class, true));
-//                    builder.addBuilder(new GenericDocumentBuilder(JCD.class, true));
-//                    builder.addBuilder(new GenericDocumentBuilder(OpponentHistogram.class, true));
-//                    builder.addBuilder(new GenericDocumentBuilder(JointHistogram.class, true));
-//                    builder.addBuilder(new GenericDocumentBuilder(ColorLayout.class, true));
-//                    builder.addBuilder(new GenericDocumentBuilder(EdgeHistogram.class, true));
-//                    builder.addBuilder(new GenericDocumentBuilder(SimpleColorHistogram.class, true));
-//                    builder.addBuilder(new GenericDocumentBuilder(AutoColorCorrelogram.class, true));
+                    builder.addBuilder(new GenericDocumentBuilder(PHOG.class, true));
+                    builder.addBuilder(new GenericDocumentBuilder(JCD.class, true));
+                    builder.addBuilder(new GenericDocumentBuilder(OpponentHistogram.class, true));
+                    builder.addBuilder(new GenericDocumentBuilder(JointHistogram.class, true));
+                    builder.addBuilder(new GenericDocumentBuilder(ColorLayout.class, true));
+                    builder.addBuilder(new GenericDocumentBuilder(EdgeHistogram.class, true));
+                    builder.addBuilder(new GenericDocumentBuilder(SimpleColorHistogram.class, true));
+                    //builder.addBuilder(new GenericDocumentBuilder(AutoColorCorrelogram.class, true));
 
                     builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.CVSURF));
-//                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.CVSIFT));
+                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.CVSIFT));
 //                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.Random, 600));
 //                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.GaussRandom));
                 }
             };
         }
         p.run();
-
-        System.out.println("** SIMPLE BoVW using CEDD and CVSURF");
-        try {
-            SimpleFeatureBOVWBuilder simpleBovwBuilder = new SimpleFeatureBOVWBuilder(DirectoryReader.open(FSDirectory.open(new File(indexPath))), new CEDD(), SimpleBuilder.KeypointDetector.CVSURF, 512, 100);
-            simpleBovwBuilder.index();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
     }
 
     /**
      * Prints help text in case the thing is not configured correctly.
      */
     private static void printHelp() {
-        System.out.println("Usage:\n" +
-                "\n" +
-                "$> ParallelFullSolrIndexer -i <index> <-d <image-directory> | -l <image-list>> [-n <number of threads>]\n" +
-                "\n" +
-                "index             ... The directory of the index. Will be appended or created if not existing.\n" +
-                "images-directory  ... The directory the images are found in. It's traversed recursively.\n" +
-                "image-list        ... A list of images in a file, one per line. Use instead of images-directory.\n" +
-                "number of threads ... The number of threads used for extracting features, e.g. # of CPU cores.");
+        System.out.println("Usage:\n"
+                + "\n"
+                + "$> ParallelFullSolrIndexer -i <index> <-d <image-directory> | -l <image-list>> [-n <number of threads>]\n"
+                + "\n"
+                + "index             ... The directory of the index. Will be appended or created if not existing.\n"
+                + "images-directory  ... The directory the images are found in. It's traversed recursively.\n"
+                + "image-list        ... A list of images in a file, one per line. Use instead of images-directory.\n"
+                + "number of threads ... The number of threads used for extracting features, e.g. # of CPU cores.");
     }
 
     /**
@@ -185,7 +186,8 @@ public class ParallelFullSolrIndexer implements Runnable {
      *
      * @param numberOfThreads
      * @param indexPath
-     * @param imageDirectory  a directory containing all the images somewhere in the child hierarchy.
+     * @param imageDirectory a directory containing all the images somewhere in
+     * the child hierarchy.
      */
     public ParallelFullSolrIndexer(int numberOfThreads, String indexPath, String imageDirectory) {
         this.numberOfThreads = numberOfThreads;
@@ -197,19 +199,22 @@ public class ParallelFullSolrIndexer implements Runnable {
      * @param numberOfThreads
      * @param indexPath
      * @param imageDirectory
-     * @param overWrite       overwrite (instead of append) the index. Set it to true if you want to delete the old index before adding new stuff.
+     * @param overWrite overwrite (instead of append) the index. Set it to true
+     * if you want to delete the old index before adding new stuff.
      */
     public ParallelFullSolrIndexer(int numberOfThreads, String indexPath, String imageDirectory, boolean overWrite) {
         this.numberOfThreads = numberOfThreads;
         this.indexPath = indexPath;
         this.imageDirectory = imageDirectory;
-        if (overWrite) openMode = IndexWriterConfig.OpenMode.CREATE;
+        if (overWrite) {
+            openMode = IndexWriterConfig.OpenMode.CREATE;
+        }
     }
 
     /**
      * @param numberOfThreads
      * @param indexPath
-     * @param imageList       a file containing a list of images, one per line
+     * @param imageList a file containing a list of images, one per line
      */
     public ParallelFullSolrIndexer(int numberOfThreads, String indexPath, File imageList) {
         this.numberOfThreads = numberOfThreads;
@@ -221,11 +226,14 @@ public class ParallelFullSolrIndexer implements Runnable {
         this.numberOfThreads = numberOfThreads;
         this.indexPath = indexPath;
         this.imageList = imageList;
-        if (overWrite) openMode = IndexWriterConfig.OpenMode.CREATE;
+        if (overWrite) {
+            openMode = IndexWriterConfig.OpenMode.CREATE;
+        }
     }
 
     /**
-     * Overwrite this method to define the builders to be used within the Indexer.
+     * Overwrite this method to define the builders to be used within the
+     * Indexer.
      *
      * @param builder
      */
@@ -236,17 +244,17 @@ public class ParallelFullSolrIndexer implements Runnable {
         builder.addBuilder(DocumentBuilderFactory.getPHOGDocumentBuilder());
         builder.addBuilder(DocumentBuilderFactory.getOpponentHistogramDocumentBuilder());
         builder.addBuilder(DocumentBuilderFactory.getJointHistogramDocumentBuilder());
-//        builder.addBuilder(DocumentBuilderFactory.getAutoColorCorrelogramDocumentBuilder());
+        builder.addBuilder(DocumentBuilderFactory.getAutoColorCorrelogramDocumentBuilder());
         builder.addBuilder(DocumentBuilderFactory.getColorLayoutBuilder());
         builder.addBuilder(DocumentBuilderFactory.getEdgeHistogramBuilder());
-//        builder.addBuilder(DocumentBuilderFactory.getScalableColorBuilder());
-//        builder.addBuilder(DocumentBuilderFactory.getLuminanceLayoutDocumentBuilder());
-//        builder.addBuilder(DocumentBuilderFactory.getColorHistogramDocumentBuilder());
+        builder.addBuilder(DocumentBuilderFactory.getScalableColorBuilder());
+        builder.addBuilder(DocumentBuilderFactory.getLuminanceLayoutDocumentBuilder());
+        builder.addBuilder(DocumentBuilderFactory.getColorHistogramDocumentBuilder());
 
-//        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderCVSIFTDocumentBuilder());
-//        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderCVSURFDocumentBuilder());
+        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderCVSIFTDocumentBuilder());
+        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderCVSURFDocumentBuilder());
         builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderRandomDocumentBuilder());
-//        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderGaussRandomDocumentBuilder());
+        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderGaussRandomDocumentBuilder());
     }
 
     public void run() {
@@ -254,7 +262,9 @@ public class ParallelFullSolrIndexer implements Runnable {
         config.setOpenMode(openMode);
         config.setCodec(new LireCustomCodec());
         try {
-            if (imageDirectory != null) System.out.println("Getting all images in " + imageDirectory + ".");
+            if (imageDirectory != null) {
+                System.out.println("Getting all images in " + imageDirectory + ".");
+            }
             writer = new IndexWriter(FSDirectory.open(new File(indexPath)), config);
             if (imageList == null) {
                 files = FileUtils.getAllImages(new File(imageDirectory), true);
@@ -263,11 +273,14 @@ public class ParallelFullSolrIndexer implements Runnable {
                 BufferedReader br = new BufferedReader(new FileReader(imageList));
                 String line = null;
                 while ((line = br.readLine()) != null) {
-                    if (line.trim().length() > 3) files.add(line.trim());
+                    if (line.trim().length() > 3) {
+                        files.add(line.trim());
+                    }
                 }
             }
             numImages = files.size();
             System.out.println("Indexing " + files.size() + " images.");
+
             Thread p = new Thread(new Producer());
             p.start();
             LinkedList<Thread> threads = new LinkedList<Thread>();
@@ -279,7 +292,7 @@ public class ParallelFullSolrIndexer implements Runnable {
             }
             Thread m = new Thread(new Monitoring());
             m.start();
-            for (Iterator<Thread> iterator = threads.iterator(); iterator.hasNext(); ) {
+            for (Iterator<Thread> iterator = threads.iterator(); iterator.hasNext();) {
                 iterator.next().join();
             }
             long l1 = System.currentTimeMillis() - l;
@@ -292,8 +305,9 @@ public class ParallelFullSolrIndexer implements Runnable {
             writer.close();
             threadFinished = true;
             // add local feature hist here
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+            
+        } catch (IOException | InterruptedException ioix) {
+            ioix.printStackTrace();
         }
     }
 
@@ -316,6 +330,7 @@ public class ParallelFullSolrIndexer implements Runnable {
     }
 
     class Monitoring implements Runnable {
+
         public void run() {
             long ms = System.currentTimeMillis();
             try {
@@ -343,11 +358,12 @@ public class ParallelFullSolrIndexer implements Runnable {
     }
 
     class Producer implements Runnable {
+
         public void run() {
             boolean leaveOneOut = false;
 //            BufferedImage tmpImage;
             int tmpSize = 0;
-            for (Iterator<String> iterator = files.iterator(); iterator.hasNext(); ) {
+            for (Iterator<String> iterator = files.iterator(); iterator.hasNext();) {
                 String path = iterator.next();
                 File next = new File(path);
                 try {
@@ -372,9 +388,11 @@ public class ParallelFullSolrIndexer implements Runnable {
     }
 
     /**
-     * Consumers take the images prepared from the Producer and extract all the image features.
+     * Consumers take the images prepared from the Producer and extract all the
+     * image features.
      */
     class Consumer implements Runnable {
+
         WorkItem tmp = null;
         ChainedDocumentBuilder builder = new ChainedDocumentBuilder();
         int count = 0;
@@ -396,7 +414,7 @@ public class ParallelFullSolrIndexer implements Runnable {
                         overallCount++;
                     }
                 } catch (InterruptedException e) {
-                     e.printStackTrace();
+                    e.printStackTrace();
                     //log.severe(e.getMessage());
                 }
                 try {
@@ -404,15 +422,10 @@ public class ParallelFullSolrIndexer implements Runnable {
                         ByteArrayInputStream b = new ByteArrayInputStream(tmp.getBuffer());
                         BufferedImage img = ImageIO.read(b);
                         Document d = builder.createDocument(img, tmp.getFileName());
-                        writer.addDocument(d);
-//                        log.info(d.getFields().toString());
-//                        log.info("** SIMPLE BoVW using CEDD and CVSURF for " + tmp.getFileName());
-//                        SimpleFeatureBOVWBuilder simpleBovwBuilder = new SimpleFeatureBOVWBuilder(DirectoryReader.open(FSDirectory.open(new File(indexPath))), new CEDD(), SimpleBuilder.KeypointDetector.CVSURF, 512, 128);
-//                        simpleBovwBuilder.index();
-
+                        writer.addDocument(d);                        
                     }
-                } catch (IOException e) {
-                     e.printStackTrace();
+                } catch (Exception ex) {
+                    System.err.println(ex.getMessage());
                 }
 //                synchronized (images) {
 //                    // we wait for the stack to be either filled or empty & not being filled any more.
