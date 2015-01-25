@@ -135,9 +135,9 @@ public class ParallelFullSolrIndexer implements Runnable {
                     builder.addBuilder(new GenericDocumentBuilder(SimpleColorHistogram.class, true));
                     //builder.addBuilder(new GenericDocumentBuilder(AutoColorCorrelogram.class, true));
 
-                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.CVSURF));
-                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.CVSIFT));
-//                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.Random, 100));
+//                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.CVSURF));
+//                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.CVSIFT));
+                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.Random, 100));
 //                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.GaussRandom));
                 }
             };
@@ -157,9 +157,9 @@ public class ParallelFullSolrIndexer implements Runnable {
                     builder.addBuilder(new GenericDocumentBuilder(SimpleColorHistogram.class, true));
                     //builder.addBuilder(new GenericDocumentBuilder(AutoColorCorrelogram.class, true));
 
-                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.CVSURF));
-                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.CVSIFT));
-//                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.Random, 600));
+//                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.CVSURF));
+//                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.CVSIFT));
+                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.Random, 600));
 //                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.GaussRandom));
                 }
             };
@@ -251,10 +251,10 @@ public class ParallelFullSolrIndexer implements Runnable {
         builder.addBuilder(DocumentBuilderFactory.getLuminanceLayoutDocumentBuilder());
         builder.addBuilder(DocumentBuilderFactory.getColorHistogramDocumentBuilder());
 
-        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderCVSIFTDocumentBuilder());
-        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderCVSURFDocumentBuilder());
+//        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderCVSIFTDocumentBuilder());
+//        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderCVSURFDocumentBuilder());
         builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderRandomDocumentBuilder());
-        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderGaussRandomDocumentBuilder());
+//        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderGaussRandomDocumentBuilder());
     }
 
     public void run() {

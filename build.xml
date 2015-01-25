@@ -39,7 +39,7 @@
         </propertyfile>
         <property file="${config}/build.properties"/>
         
-        <echo file="default.mf" append="false">Build-Date: ${touch.time}${line.separator}Build-Number: ${build-number}${line.separator}Class-Path: lib/JOpenSurf.jar lib/opencv-249.jar lib/commons-codec-1.9.jar lib/jhlabs.jar lib/common-image-3.0.jar lib/common-io-3.0.jar lib/common-lang-3.0.jar lib/imageio-core-3.0.jar lib/imageio-jpeg-3.0.jar lib/imageio-metadata-3.0.jar lib/imageio-tiff-3.0.jar${line.separator}Main-Class: net.semanticmetadata.lire.solr.ParallelFullSolrIndexer${line.separator}</echo>
+        <echo file="default.mf" append="false">Build-Date: ${touch.time}${line.separator}Build-Number: ${build-number}${line.separator}Class-Path: lib/JOpenSurf.jar lib/opencv-249.jar lib/commons-codec-1.9.jar lib/jhlabs.jar lib/common-image-3.0.jar lib/common-io-3.0.jar lib/common-lang-3.0.jar lib/imageio-core-3.0.jar lib/imageio-jpeg-3.0.jar lib/imageio-metadata-3.0.jar lib/imageio-tiff-3.0.jar${line.separator}Main-Class: net.semanticmetadata.lire.solr.Sandbox${line.separator}</echo>
         <javac srcdir="${src}" destdir="${build}" debug="true" debuglevel="lines,vars,source">
             <classpath refid="class.path"/>
         </javac>
@@ -116,6 +116,27 @@
     <target name="index" depends="compile">
         <!-- Note: This needs to be forked, otherwise multi threading won't work and the heap space will be exceeded soon. -->
         <java classpathref="class.path" classname="net.semanticmetadata.lire.solr.ParallelFullSolrIndexer" fork="true" maxmemory="4048m" error="indexer_error.log" output="indexer_output.log">
+            <!--<jvmarg line="-Xmx4048m -server -Djava.awt.headless=true -Djava.library.path=lib/opencv"/>-->
+            <jvmarg line="-Xmx4048m -server -Djava.library.path=lib/opencv"/>
+            <!-- adapt this argument to use your pictures -->
+            <arg line="-d ./testdata -i ./idx-cars -n 16"/>
+            <!--<arg line="-l ./out.txt -i ./idx-cars -n 16"/>-->
+            <!--
+                Usage:
+
+                $> ParallelIndexer -i <index> <-d <image-directory> | -l <image-list>> [-n <number of threads>]
+
+                index             ... The directory of the index. Will be appended or created if not existing.
+                images-directory  ... The directory the images are found in. It's traversed recursively.
+                image-list        ... A list of images in a file, one per line. Use instead of images-directory.
+                number of threads ... The number of threads used for extracting features, e.g. # of CPU cores.
+            -->
+        </java>
+    </target>
+    
+    <target name="search" depends="compile">
+        <!-- Note: This needs to be forked, otherwise multi threading won't work and the heap space will be exceeded soon. -->
+        <java classpathref="class.path" classname="net.semanticmetadata.lire.solr.Sandbox" fork="true" maxmemory="4048m" error="indexer_error.log" output="indexer_output.log">
             <!--<jvmarg line="-Xmx4048m -server -Djava.awt.headless=true -Djava.library.path=lib/opencv"/>-->
             <jvmarg line="-Xmx4048m -server -Djava.library.path=lib/opencv"/>
             <!-- adapt this argument to use your pictures -->
