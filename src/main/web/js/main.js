@@ -2,36 +2,42 @@ var serverUrlPrefix = "http://localhost:8983/solr/media_shard1_replica1/lireq";
 var searchUrlPrefix = "http://localhost:8983/solr/media_shard1_replica1/select";
 
 function reWriteImageUrl(imgUrlOriginal) {
-    imgUrl = "http://localhost/images/" + imgUrlOriginal;
+    imgUrl = "http://localhost/images" + imgUrlOriginal;
     return imgUrl;
 }
 
 function getCBIRLinks(myID) {
     result = "";
     result += "<div style=\"font-size:8pt;text-transform:lowercase;\"><p>";
-    result += "<a href=\"javascript:search('" + myID + "', 'fo_ha');\">fo</a>, ";
-    result += "<a href=\"javascript:search('" + myID + "', 'fc_ha');\">fc</a>, ";
-    result += "<a href=\"javascript:search('" + myID + "', 'jh_ha');\">jh</a>, ";
-    result += "<a href=\"javascript:search('" + myID + "', 'oh_ha');\">oh</a>, ";
-    result += "<a href=\"javascript:search('" + myID + "', 'jp_ha');\">jp</a>, ";
-    result += "<a href=\"javascript:search('" + myID + "', 'fo_ha');\">fo</a>, ";
-    result += "<a href=\"javascript:search('" + myID + "', 'cl_ha');\">CL</a>, ";
-    result += "<a href=\"javascript:search('" + myID + "', 'ce_ha');\">CE</a>, ";
-    result += "<a href=\"javascript:search('" + myID + "', 'eh_ha');\">EH</a>, ";
-    result += "<a href=\"javascript:search('" + myID + "', 'jc_ha');\">JC</a>, ";
-    result += "<a href=\"javascript:search('" + myID + "', 'ph_ha');\">PH</a>, ";
+    result += "<a href=\"javascript:search('" + myID + "', 'ta_ha');\">ta</a> ";
+    result += "<a href=\"javascript:search('" + myID + "', 'ga_ha');\">ga</a> ";
+    result += "<a href=\"javascript:search('" + myID + "', 'll_ha');\">ll</a> ";
+    result += "<a href=\"javascript:search('" + myID + "', 'fo_ha');\">fo</a> ";
+    result += "<a href=\"javascript:search('" + myID + "', 'fc_ha');\">fc</a> ";
+    result += "<a href=\"javascript:search('" + myID + "', 'jh_ha');\">jh</a> ";
+    result += "<a href=\"javascript:search('" + myID + "', 'oh_ha');\">oh</a> ";
+    result += "<a href=\"javascript:search('" + myID + "', 'jp_ha');\">jp</a> ";
+    result += "<a href=\"javascript:search('" + myID + "', 'fo_ha');\">fo</a> ";
+    result += "<a href=\"javascript:search('" + myID + "', 'cl_ha');\">CL</a> ";
+    result += "<a href=\"javascript:search('" + myID + "', 'ce_ha');\">CE</a> ";
+    result += "<a href=\"javascript:search('" + myID + "', 'eh_ha');\">EH</a> ";
+    result += "<a href=\"javascript:search('" + myID + "', 'jc_ha');\">JC</a> ";
+    result += "<a href=\"javascript:search('" + myID + "', 'ph_ha');\">PH</a> ";
     result += "<a href=\"javascript:search('" + myID + "', 'sc_ha');\">SC</a> ";
     result += "</p><p>"
-    result += "<a href=\"javascript:hashSearch('fc','" + imageUrl + "');\">fc</a>, "
-    result += "<a href=\"javascript:hashSearch('fo','" + imageUrl + "');\">fo</a>, "
-    result += "<a href=\"javascript:hashSearch('jh','" + imageUrl + "');\">jh</a>, "
-    result += "<a href=\"javascript:hashSearch('oh','" + imageUrl + "');\">oh</a>, "
-    result += "<a href=\"javascript:hashSearch('jp','" + imageUrl + "');\">jp</a>, "
-    result += "<a href=\"javascript:hashSearch('cl','" + imageUrl + "');\">CL</a>, "
-    result += "<a href=\"javascript:hashSearch('ce','" + imageUrl + "');\">CE</a>, "
-    result += "<a href=\"javascript:hashSearch('eh','" + imageUrl + "');\">EH</a>, "
-    result += "<a href=\"javascript:hashSearch('jc','" + imageUrl + "');\">JC</a>, "
-    result += "<a href=\"javascript:hashSearch('ph','" + imageUrl + "');\">PH</a>, "
+    result += "<a href=\"javascript:hashSearch('ta','" + imageUrl + "');\">ta</a> "
+    result += "<a href=\"javascript:hashSearch('ga','" + imageUrl + "');\">ga</a> "
+    result += "<a href=\"javascript:hashSearch('ll','" + imageUrl + "');\">ll</a> "
+    result += "<a href=\"javascript:hashSearch('fc','" + imageUrl + "');\">fc</a> "
+    result += "<a href=\"javascript:hashSearch('fo','" + imageUrl + "');\">fo</a> "
+    result += "<a href=\"javascript:hashSearch('jh','" + imageUrl + "');\">jh</a> "
+    result += "<a href=\"javascript:hashSearch('oh','" + imageUrl + "');\">oh</a> "
+    result += "<a href=\"javascript:hashSearch('jp','" + imageUrl + "');\">jp</a> "
+    result += "<a href=\"javascript:hashSearch('cl','" + imageUrl + "');\">CL</a> "
+    result += "<a href=\"javascript:hashSearch('ce','" + imageUrl + "');\">CE</a> "
+    result += "<a href=\"javascript:hashSearch('eh','" + imageUrl + "');\">EH</a> "
+    result += "<a href=\"javascript:hashSearch('jc','" + imageUrl + "');\">JC</a> "
+    result += "<a href=\"javascript:hashSearch('ph','" + imageUrl + "');\">PH</a> "
     result += "<a href=\"javascript:hashSearch('sc','" + imageUrl + "');\">SC</a></p></div>"
     return result;
 }
@@ -53,6 +59,7 @@ function printResults(docs) {
             col = "ui-block-d";
         }
         recent = $("<div class=\"" + col + "\"><div style=\"height:170px\"><img style=\"max-width:160px;max-height:160px;display: block;margin-left: auto;margin-right: auto;\" src=\"" + imageUrl + "\" /></div>"
+                + "score=" + (docs[i].d || 0)
                 + getCBIRLinks(myID)
                 + "</div>");
         last.append(recent);
@@ -120,17 +127,20 @@ function tagSearchDo() {
                 recent = $("<div class=\"" + col + "\"><div style=\"height:170px\"><img style=\"max-width:160px;max-height:160px;display: block;margin-left: auto;margin-right: auto;\" src=\"" + imageUrl + "\" title=\"" + myResult.response.docs[i].tags[0].toString() + "\"/></div>"
                         + getCBIRLinks(myID)
                         + "<div style=\"font-size:8pt\"><p>sort: "
-                        + "<a href=\"javascript:extract('fc','" + imageUrl + "');\">fc</a>, "
-                        + "<a href=\"javascript:extract('fo','" + imageUrl + "');\">fo</a>, "
-                        + "<a href=\"javascript:extract('jh','" + imageUrl + "');\">jh</a>, "
-                        + "<a href=\"javascript:extract('oh','" + imageUrl + "');\">oh</a>, "
-                        + "<a href=\"javascript:extract('jp','" + imageUrl + "');\">jp</a>, "
-                        + "<a href=\"javascript:extract('cl','" + imageUrl + "');\">cl</a>, "
-                        + "<a href=\"javascript:extract('ce','" + imageUrl + "');\">ce</a>, "
-                        + "<a href=\"javascript:extract('eh','" + imageUrl + "');\">eh</a>, "
-                        + "<a href=\"javascript:extract('jc','" + imageUrl + "');\">jc</a>, "
-                        + "<a href=\"javascript:extract('ph','" + imageUrl + "');\">ph</a>, "
-                        + "<a href=\"javascript:extract('sc','" + imageUrl + "');\">sc</a><br/>"
+                        + "<a href=\"javascript:extract('fc','" + imageUrl + "');\">fc</a> "
+                        + "<a href=\"javascript:extract('fo','" + imageUrl + "');\">fo</a> "
+                        + "<a href=\"javascript:extract('jh','" + imageUrl + "');\">jh</a> "
+                        + "<a href=\"javascript:extract('oh','" + imageUrl + "');\">oh</a> "
+                        + "<a href=\"javascript:extract('jp','" + imageUrl + "');\">jp</a> "
+                        + "<a href=\"javascript:extract('cl','" + imageUrl + "');\">cl</a> "
+                        + "<a href=\"javascript:extract('ce','" + imageUrl + "');\">ce</a> "
+                        + "<a href=\"javascript:extract('eh','" + imageUrl + "');\">eh</a> "
+                        + "<a href=\"javascript:extract('jc','" + imageUrl + "');\">jc</a> "
+                        + "<a href=\"javascript:extract('ph','" + imageUrl + "');\">ph</a> "
+                        + "<a href=\"javascript:extract('sc','" + imageUrl + "');\">sc</a> "
+                        + "<a href=\"javascript:extract('ll','" + imageUrl + "');\">ll</a> "
+                        + "<a href=\"javascript:extract('ga','" + imageUrl + "');\">ga</a> "
+                        + "<a href=\"javascript:extract('ta','" + imageUrl + "');\">ta</a><br/>"
                         + "</p></div></div>");
 
                 last.append(recent);
@@ -150,7 +160,7 @@ $(document).ready(function () {
     // get JSON-formatted data from the server
     $("#perf").html("Please stand by .... <img src=\"img/loader-light.gif\"/>");
 
-    $.ajax("http://localhost:8983/solr/media_shard1_replica1/lireq?fl=*,score&field=sc_ha&wt=json&url=http://pbs.twimg.com/media/BoiSfsaIIAAQp-F.jpg", {
+    $.ajax("http://localhost:8983/solr/media_shard1_replica1/lireq?field=sc_ha&wt=json&url=http://192.168.1.142/images/data/digitalcandy/ml/images/Faces/image_0025.jpg", {
         dataType: 'jsonp',
         'jsonp': 'json.wrf',
         'wt': 'json',
@@ -237,7 +247,7 @@ function hashSearch(field, url) {
                 for (var i = 0; i < Math.max(5, numHashes); i++) {
                     hashString += myResult.hashes[i] + " ";
                 }
-                queryString = searchUrlPrefix + "?q=id:*&fq=" + field + "_ha:(" + hashString.trim() + ")&wt=json&rows=60";
+                queryString = searchUrlPrefix + "?q=id:*&fq=" + field + "_ha:(" + hashString.trim() + ")&wt=json&rows=60&start=0";
                 if ($('input[name="radio-v-1"]:checked').val() == "boost") {
                     queryString = queryString + "&defType=edismax&boost=div(recip(lirefunc(" + encodeURIComponent(field + ",\"" + myResult.histogram + "\"") + "),1,100,100),query($q))"; // boost
                     console.log("Using boost");
