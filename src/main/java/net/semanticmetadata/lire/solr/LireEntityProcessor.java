@@ -1,6 +1,5 @@
 package net.semanticmetadata.lire.solr;
 
-import net.semanticmetadata.lire.imageanalysis.*;
 import net.semanticmetadata.lire.indexing.hashing.BitSampling;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.solr.handler.dataimport.Context;
@@ -13,10 +12,31 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
+import net.semanticmetadata.lire.imageanalysis.LireFeature;
+import net.semanticmetadata.lire.imageanalysis.ColorLayout;
+import net.semanticmetadata.lire.imageanalysis.EdgeHistogram;
+import net.semanticmetadata.lire.imageanalysis.JCD;
+import net.semanticmetadata.lire.imageanalysis.OpponentHistogram;
+import net.semanticmetadata.lire.imageanalysis.PHOG;
+import net.semanticmetadata.lire.imageanalysis.AutoColorCorrelogram;
+import net.semanticmetadata.lire.imageanalysis.CEDD;
+import net.semanticmetadata.lire.imageanalysis.FCTH;
+import net.semanticmetadata.lire.imageanalysis.FuzzyOpponentHistogram;
+import net.semanticmetadata.lire.imageanalysis.ScalableColor;
+import net.semanticmetadata.lire.imageanalysis.Gabor;
+import net.semanticmetadata.lire.imageanalysis.Tamura;
+import net.semanticmetadata.lire.imageanalysis.LuminanceLayout;
+import net.semanticmetadata.lire.imageanalysis.JpegCoefficientHistogram;
+import net.semanticmetadata.lire.imageanalysis.SimpleColorHistogram;
+import net.semanticmetadata.lire.imageanalysis.LocalBinaryPatterns;
+import net.semanticmetadata.lire.imageanalysis.RotationInvariantLocalBinaryPatterns;
+import net.semanticmetadata.lire.imageanalysis.BinaryPatternsPyramid;
+import net.semanticmetadata.lire.imageanalysis.GenericByteLireFeature;
 
-import static org.apache.solr.handler.dataimport.DataImportHandlerException.SEVERE;
-import static org.apache.solr.handler.dataimport.DataImportHandlerException.wrapAndThrow;
+import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
+import net.semanticmetadata.lire.imageanalysis.spatialpyramid.SPCEDD;
+import net.semanticmetadata.lire.imageanalysis.mser.MSERFeature;
+
 import static org.apache.solr.handler.dataimport.XPathEntityProcessor.URL;
 
 /**
@@ -107,7 +127,8 @@ public class LireEntityProcessor extends EntityProcessorBase {
                 row.put(hashesField, ParallelSolrIndexer.arrayToString(BitSampling.generateHashes(feature.getDoubleHistogram())));
             }
         } catch (IOException e) {
-            wrapAndThrow(SEVERE, e, "Error loading image or extracting features.");
+            System.err.println("Error loading image or extracting features.");
+            //wrapAndThrow(SEVERE, e, "Error loading image or extracting features.");
         }
         // if (count++>10)
         done = true;

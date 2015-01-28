@@ -39,7 +39,6 @@
 
 package net.semanticmetadata.lire.solr;
 
-import net.semanticmetadata.lire.imageanalysis.*;
 import net.semanticmetadata.lire.indexing.hashing.BitSampling;
 import net.semanticmetadata.lire.indexing.tools.Extractor;
 import net.semanticmetadata.lire.utils.SerializationUtils;
@@ -47,7 +46,32 @@ import org.apache.commons.codec.binary.Base64;
 
 import java.io.*;
 import java.util.HashMap;
+
+import net.semanticmetadata.lire.imageanalysis.LireFeature;
+import net.semanticmetadata.lire.imageanalysis.ColorLayout;
+import net.semanticmetadata.lire.imageanalysis.EdgeHistogram;
+import net.semanticmetadata.lire.imageanalysis.JCD;
+import net.semanticmetadata.lire.imageanalysis.OpponentHistogram;
+import net.semanticmetadata.lire.imageanalysis.PHOG;
+import net.semanticmetadata.lire.imageanalysis.AutoColorCorrelogram;
+import net.semanticmetadata.lire.imageanalysis.CEDD;
+import net.semanticmetadata.lire.imageanalysis.FCTH;
+import net.semanticmetadata.lire.imageanalysis.FuzzyOpponentHistogram;
+import net.semanticmetadata.lire.imageanalysis.ScalableColor;
+import net.semanticmetadata.lire.imageanalysis.Gabor;
+import net.semanticmetadata.lire.imageanalysis.Tamura;
+import net.semanticmetadata.lire.imageanalysis.LuminanceLayout;
+import net.semanticmetadata.lire.imageanalysis.JpegCoefficientHistogram;
+import net.semanticmetadata.lire.imageanalysis.SimpleColorHistogram;
+import net.semanticmetadata.lire.imageanalysis.LocalBinaryPatterns;
+import net.semanticmetadata.lire.imageanalysis.RotationInvariantLocalBinaryPatterns;
+import net.semanticmetadata.lire.imageanalysis.BinaryPatternsPyramid;
+import net.semanticmetadata.lire.imageanalysis.GenericByteLireFeature;
+
 import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
+import net.semanticmetadata.lire.imageanalysis.spatialpyramid.SPCEDD;
+import net.semanticmetadata.lire.imageanalysis.mser.MSERFeature;
+
 
 /**
  * Simple binary -> xml conversion to support import of binary extraction files of LIRE.

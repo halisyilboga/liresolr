@@ -3,7 +3,7 @@
 import os
 
 
-def run(folder="/data/digitalcandy/ml/images/"):
+def run(folder="testdata/cars/"):
     os.path.walk(folder, step, ('.jpg', 'out.txt'))
 
 def step((ext, seed_path), dirname, names):

@@ -10,8 +10,6 @@ package net.semanticmetadata.lire.solr;
  * @author ferdous
  */
 import net.semanticmetadata.lire.DocumentBuilderFactory;
-import net.semanticmetadata.lire.imageanalysis.*;
-import net.semanticmetadata.lire.imageanalysis.bovw.SimpleFeatureBOVWBuilder;
 import net.semanticmetadata.lire.impl.ChainedDocumentBuilder;
 import net.semanticmetadata.lire.impl.GenericDocumentBuilder;
 import net.semanticmetadata.lire.impl.SimpleBuilder;
@@ -20,7 +18,6 @@ import net.semanticmetadata.lire.utils.FileUtils;
 import net.semanticmetadata.lire.utils.LuceneUtils;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.FSDirectory;
@@ -35,8 +32,32 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
-import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
 import net.semanticmetadata.lire.indexing.parallel.WorkItem;
+
+import net.semanticmetadata.lire.imageanalysis.LireFeature;
+import net.semanticmetadata.lire.imageanalysis.ColorLayout;
+import net.semanticmetadata.lire.imageanalysis.EdgeHistogram;
+import net.semanticmetadata.lire.imageanalysis.JCD;
+import net.semanticmetadata.lire.imageanalysis.OpponentHistogram;
+import net.semanticmetadata.lire.imageanalysis.PHOG;
+import net.semanticmetadata.lire.imageanalysis.AutoColorCorrelogram;
+import net.semanticmetadata.lire.imageanalysis.CEDD;
+import net.semanticmetadata.lire.imageanalysis.FCTH;
+import net.semanticmetadata.lire.imageanalysis.FuzzyOpponentHistogram;
+import net.semanticmetadata.lire.imageanalysis.ScalableColor;
+import net.semanticmetadata.lire.imageanalysis.Gabor;
+import net.semanticmetadata.lire.imageanalysis.Tamura;
+import net.semanticmetadata.lire.imageanalysis.LuminanceLayout;
+import net.semanticmetadata.lire.imageanalysis.JpegCoefficientHistogram;
+import net.semanticmetadata.lire.imageanalysis.SimpleColorHistogram;
+import net.semanticmetadata.lire.imageanalysis.LocalBinaryPatterns;
+import net.semanticmetadata.lire.imageanalysis.RotationInvariantLocalBinaryPatterns;
+import net.semanticmetadata.lire.imageanalysis.BinaryPatternsPyramid;
+import net.semanticmetadata.lire.imageanalysis.GenericByteLireFeature;
+
+import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
+import net.semanticmetadata.lire.imageanalysis.spatialpyramid.SPCEDD;
+import net.semanticmetadata.lire.imageanalysis.mser.MSERFeature;
 
 /**
  * This class allows for creating indexes in a parallel manner. The class at

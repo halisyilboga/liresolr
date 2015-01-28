@@ -39,8 +39,6 @@
 
 package net.semanticmetadata.lire.solr;
 
-import net.semanticmetadata.lire.imageanalysis.EdgeHistogram;
-import net.semanticmetadata.lire.imageanalysis.LireFeature;
 import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.BinaryDocValues;
 import org.apache.lucene.index.FieldInfo;
@@ -54,6 +52,32 @@ import org.apache.solr.common.util.Base64;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
+
+import net.semanticmetadata.lire.imageanalysis.LireFeature;
+import net.semanticmetadata.lire.imageanalysis.ColorLayout;
+import net.semanticmetadata.lire.imageanalysis.EdgeHistogram;
+import net.semanticmetadata.lire.imageanalysis.JCD;
+import net.semanticmetadata.lire.imageanalysis.OpponentHistogram;
+import net.semanticmetadata.lire.imageanalysis.PHOG;
+import net.semanticmetadata.lire.imageanalysis.AutoColorCorrelogram;
+import net.semanticmetadata.lire.imageanalysis.CEDD;
+import net.semanticmetadata.lire.imageanalysis.FCTH;
+import net.semanticmetadata.lire.imageanalysis.FuzzyOpponentHistogram;
+import net.semanticmetadata.lire.imageanalysis.ScalableColor;
+import net.semanticmetadata.lire.imageanalysis.Gabor;
+import net.semanticmetadata.lire.imageanalysis.Tamura;
+import net.semanticmetadata.lire.imageanalysis.LuminanceLayout;
+import net.semanticmetadata.lire.imageanalysis.JpegCoefficientHistogram;
+import net.semanticmetadata.lire.imageanalysis.SimpleColorHistogram;
+import net.semanticmetadata.lire.imageanalysis.LocalBinaryPatterns;
+import net.semanticmetadata.lire.imageanalysis.RotationInvariantLocalBinaryPatterns;
+import net.semanticmetadata.lire.imageanalysis.BinaryPatternsPyramid;
+import net.semanticmetadata.lire.imageanalysis.GenericByteLireFeature;
+
+import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
+import net.semanticmetadata.lire.imageanalysis.spatialpyramid.SPCEDD;
+import net.semanticmetadata.lire.imageanalysis.mser.MSERFeature;
+
 
 /**
  * A query function for sorting results based on the LIRE CBIR functions.
