@@ -1,0 +1,116 @@
+@charset "utf-8";
+@media only screen and (min-width: 900px){
+    .ui-page {
+        background-color: #fff;
+        width: 1048px !important;
+        margin: 0 auto !important;
+        position: relative !important;
+    }
+}
+body {
+    background-color: #a6a6a6;
+    font-family: Tahoma, Geneva, sans-serif;
+    font-size: 12pt;
+    color: #260801;
+    line-height: 130%;
+    margin: 0 auto;
+    background-color: #f5f5f5;
+}
+h1 {
+    font-size: 24pt;
+    font-family: Tahoma, Geneva, sans-serif;
+    font-weight: bold;
+    font-style: normal;
+}
+.main {    
+    background-color: #fff;
+    box-shadow: -3px 0 5px -3px rgba(1, 1, 1, 0.87), 3px 0 5px -3px rgba(1, 1, 1, 0.87);
+    padding: 0 20px;
+    border: 1px solid #333;
+}
+.lireimg {
+    max-height: 140px;
+    margin-top: 15px;
+    margin-right: 3px;
+    margin-bottom: 3px;
+    margin-left: 3px;
+    max-width: 190px;
+    text-align: center;
+    vertical-align: middle;
+    position: relative;
+    left: auto;
+}
+.imgCont {
+    float: left;
+    position:relative;
+    margin: 0px;
+    height: 220px;
+    width: 196px;
+    margin-bottom: 8px;
+    // border: 1px solid #000;
+}
+.imgContLarge {
+    float: left;
+    position:relative;
+    margin: 0px;
+    height: 280px;
+    width: 196px;
+    margin-bottom: 8px;
+    // border: 1px solid #000;
+}
+.searchLink {
+    font-family: Tahoma, Geneva, sans-serif;
+    font-size: 8pt;
+    color: #260801;
+    text-decoration: none;
+    margin: 0 auto;
+}
+
+.callout {
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid #eee;
+    border-left-width: 5px;
+    border-radius: 3px
+}
+
+.callout h4 {
+    margin-top: 0;
+    margin-bottom: 5px
+}
+
+.callout p:last-child {
+    margin-bottom: 0
+}
+
+.callout code {
+    border-radius: 3px
+}
+
+.callout+.callout {
+    margin-top: -5px
+}
+
+.callout-danger {
+    border-left-color: #ce4844
+}
+
+.callout-danger h4 {
+    color: #ce4844
+}
+
+.callout-warning {
+    border-left-color: #aa6708
+}
+
+.callout-warning h4 {
+    color: #aa6708
+}
+
+.callout-info {
+    border-left-color: #1b809e
+}
+
+.callout-info h4 {
+    color: #1b809e
+}
