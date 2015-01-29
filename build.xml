@@ -11,7 +11,7 @@
     <property name="web" value="src/main/web"/>
     <property name="build" value="classes"/>
     <property name="dist" value="dist"/>
-    <property name="versionstring" value="0.9.4_beta_2"/>
+    <property name="versionstring" value="0.9.5"/>
     <!-- path to test files -->
     <property name="test" value="test"/>
     <!-- path to documentation like README or CHANGES -->
@@ -95,21 +95,31 @@
             <jvmarg line="-Xmx2048M -Djava.library.path=lib/opencv"/>
             <!-- adapt this argument to use your pictures -->
             <arg line="-i out.txt -o docs.xml -n 16"/>
+            <!--<arg line="-d ./testdata -i ./idx-test -n 16"/>-->
+            <!--
+                Usage:
 
+                $> ParallelSolrIndexer -i <index> <-d <image-directory> | -l <image-list>> [-n <number of threads>]
+
+                index             ... The directory of the index. Will be appended or created if not existing.
+                images-directory  ... The directory the images are found in. It's traversed recursively.
+                image-list        ... A list of images in a file, one per line. Use instead of images-directory.
+                number of threads ... The number of threads used for extracting features, e.g. # of CPU cores.
+            -->            
         </java>
     </target>
     
     <target name="lindex" depends="compile">
         <!-- Note: This needs to be forked, otherwise multi threading won't work and the heap space will be exceeded soon. -->
-        <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelFullSolrIndexer" fork="true" maxmemory="4048M" error="indexer_error.log" output="indexer_output.log">
-            <jvmarg line="-Xmx4048M -server -Djava.awt.headless=true -Djava.library.path=lib/opencv"/>
+        <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelFullSolrIndexer" fork="true" maxmemory="2048M" error="indexer_error.log" output="indexer_output.log">
+            <jvmarg line="-Xmx2048M -Djava.library.path=lib/opencv"/>
             <!-- adapt this argument to use your pictures -->
-            <arg line="-d ./testdata -i ./idx-cars -n 16"/>
+            <arg line="-d ./testdata/cars -i ./idx-cars -n 16"/>
             <!--<arg line="-l ./out.txt -i ./idx-cars -n 16"/>-->
             <!--
                 Usage:
 
-                $> ParallelIndexer -i <index> <-d <image-directory> | -l <image-list>> [-n <number of threads>]
+                $> ParallelFullSolrIndexer -i <index> <-d <image-directory> | -l <image-list>> [-n <number of threads>]
 
                 index             ... The directory of the index. Will be appended or created if not existing.
                 images-directory  ... The directory the images are found in. It's traversed recursively.
@@ -121,22 +131,12 @@
     
     <target name="search" depends="compile">
         <!-- Note: This needs to be forked, otherwise multi threading won't work and the heap space will be exceeded soon. -->
-        <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.Sandbox" fork="true" maxmemory="4048M" error="indexer_error.log" output="indexer_output.log">
+        <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.Sandbox" fork="true" maxmemory="2048M" error="indexer_error.log" output="indexer_output.log">
             <!--<jvmarg line="-Xmx4048m -server -Djava.awt.headless=true -Djava.library.path=lib/opencv"/>-->
-            <jvmarg line="-Xmx4048M -server -Djava.library.path=lib/opencv"/>
+            <jvmarg line="-Xmx2048M -Djava.library.path=lib/opencv"/>
             <!-- adapt this argument to use your pictures -->
             <arg line="-d ./testdata -i ./idx-cars -n 16"/>
             <!--<arg line="-l ./out.txt -i ./idx-cars -n 16"/>-->
-            <!--
-                Usage:
-
-                $> ParallelIndexer -i <index> <-d <image-directory> | -l <image-list>> [-n <number of threads>]
-
-                index             ... The directory of the index. Will be appended or created if not existing.
-                images-directory  ... The directory the images are found in. It's traversed recursively.
-                image-list        ... A list of images in a file, one per line. Use instead of images-directory.
-                number of threads ... The number of threads used for extracting features, e.g. # of CPU cores.
-            -->
         </java>
     </target>
         

@@ -42,10 +42,18 @@ import net.semanticmetadata.lire.imageanalysis.LocalBinaryPatterns;
 import net.semanticmetadata.lire.imageanalysis.RotationInvariantLocalBinaryPatterns;
 import net.semanticmetadata.lire.imageanalysis.BinaryPatternsPyramid;
 import net.semanticmetadata.lire.imageanalysis.GenericByteLireFeature;
+import net.semanticmetadata.lire.imageanalysis.SurfFeature;
+import net.semanticmetadata.lire.imageanalysis.bovw.BOVWBuilder;
+import net.semanticmetadata.lire.imageanalysis.bovw.SimpleFeatureBOVWBuilder;
+import net.semanticmetadata.lire.imageanalysis.bovw.SurfFeatureHistogramBuilder;
 
 import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
 import net.semanticmetadata.lire.imageanalysis.spatialpyramid.SPCEDD;
 import net.semanticmetadata.lire.imageanalysis.mser.MSERFeature;
+import net.semanticmetadata.lire.impl.ChainedDocumentBuilder;
+import net.semanticmetadata.lire.impl.SimpleBuilder;
+import net.semanticmetadata.lire.impl.SurfDocumentBuilder;
+import net.semanticmetadata.lire.indexing.parallel.ParallelIndexer;
 
 /**
  *
@@ -58,20 +66,22 @@ public class Sandbox {
     private static final String queryImage = "/Users/ferdous/projects/digitalcandy/liresolr/testdata/ferrari/red/6822615599_18d9915317_b.jpg";
     static String bovw_index_path = "index";
     int sampleToCreateCodebook = 1000;
-    int numberOfClusters = 100;
+    int numberOfClusters = 512;
 
-//    public void createSurfIndex() throws IOException {
-//        ParallelIndexer pin = new ParallelIndexer(8, bovw_index_path, "testdata") {
-//            @Override
-//            public void addBuilders(ChainedDocumentBuilder builder) {
-//                builder.addBuilder(new BOVWBuilder(reader, new SurfFeature(), samples, 500));
-//            }
-//        };
-//        pin.run();
-//        System.out.println("** SIMPLE BoVW using PHOG and Random");
-//        SimpleFeatureBOVWBuilder simpleBovwBuilder = new SimpleFeatureBOVWBuilder(DirectoryReader.open(FSDirectory.open(new File(bovw_index_path))), new PHOG(), SimpleBuilder.KeypointDetector.Random, sampleToCreateCodebook, numberOfClusters);
-//        simpleBovwBuilder.index();
-//    }
+    public void createSurfIndex() throws IOException {
+        IndexReader reader = DirectoryReader.open(FSDirectory.open(indexPath));
+        ParallelIndexer pin = new ParallelIndexer(8, bovw_index_path, "testdata") {
+            @Override
+            public void addBuilders(ChainedDocumentBuilder builder) {
+                builder.addBuilder(new SurfDocumentBuilder());
+            }
+        };
+        pin.run();
+        System.out.println("** SIMPLE BoVW using PHOG and Random");
+        SimpleFeatureBOVWBuilder simpleBovwBuilder = new SimpleFeatureBOVWBuilder(DirectoryReader.open(FSDirectory.open(indexPath)), new CEDD(), SimpleBuilder.KeypointDetector.Random, sampleToCreateCodebook, numberOfClusters);
+        simpleBovwBuilder.index();
+    }
+
     private static ImageSearcher getSearcher(int selectedIndex, int limit) {
         int numResults = 50;
         try {
@@ -80,7 +90,7 @@ public class Sandbox {
             // nothing to do ...
         }
         ImageSearcher searcher = ImageSearcherFactory.createColorLayoutImageSearcher(numResults);
-        
+
         if (selectedIndex == 1) { // ScalableColor
             searcher = ImageSearcherFactory.createScalableColorImageSearcher(numResults);
         } else if (selectedIndex == 2) { // EdgeHistogram
@@ -127,7 +137,7 @@ public class Sandbox {
                     reader.close();
 //                    hits = lsa(hits, myDoc);
                     FileUtils.saveImageResultsToHtml("filtertest", hits, myDoc.getValues(DocumentBuilder.FIELD_NAME_IDENTIFIER)[0]);
-                    
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -198,7 +208,7 @@ public class Sandbox {
     public static void main(String[] args) {
         try {
             Sandbox sandbox = new Sandbox();
-//            sandbox.createSurfIndex();
+            sandbox.createSurfIndex();
             sandbox.findByUrl();
         } catch (IOException ex) {
             LOG.info(ex.getMessage());
