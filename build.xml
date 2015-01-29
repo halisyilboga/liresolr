@@ -2,21 +2,26 @@
     <description>
         This buildfile is used to build and package the LIRE RequestHandler for SOLR
     </description>
-
+    <property environment="env"/>
+    <property name="asinstalldir" value="${env.GLASSFISH_HOME}"/>    
+    <property name="name" value="LireRequestHandler"/>
+    <property name="war.file" value="LireRequestHandler.war"/>
     <property name="src" value="src/main/java"/>
     <property name="config" value="src/main/config"/>
+    <property name="web" value="src/main/web"/>
     <property name="build" value="classes"/>
     <property name="dist" value="dist"/>
     <property name="versionstring" value="0.9.4_beta_2"/>
     <!-- path to test files -->
     <property name="test" value="test"/>
     <!-- path to documentation like README or CHANGES -->
-    <property name="doc" value="src/main/doc"/>
+    <property name="doc" value="src/main/docs"/>
     <!-- path to additional files like installer scripts, icons and batch files -->
     <property name="add.files" value="add.files"/>
     <!--<property name="solrlib" value="/data/digitalcandy/fusion/fusion/jetty/solr/webapps/solr/WEB-INF/lib/"/>-->
     <property name="solrlib" value="/Users/ferdous/projects/digitalcandy/fusion/jetty/solr/webapps/solr/WEB-INF/lib/"/>
 
+    
     <!-- define the classpath  -->
     <path id="classpath.path">
         <fileset dir="lib" includes="*.jar"/>
@@ -63,38 +68,10 @@
 
     <target name="dist" depends="compile">
         <mkdir dir="${dist}"/>
-        <!--mkdir dir="${dist}/lib"/>
-        <mkdir dir="${dist}/docs"/-->
-
-        <!--copy todir="${dist}">
-            <fileset dir="lib">
-                <patternset>
-                    <include name="**/*.*"/>
-                    <exclude name="**/CVS/*"/>
-                    <exclude name="**/.svn/*"/>
-                </patternset>
-            </fileset>
-        </copy-->
         <unjar src="lib/lire.jar" dest="${build}"/>
-        <!-- replace the bit sampling data file -->
-
-        <!--delete file="${build}/net/semanticmetadata/lire/indexing/hashing/LshBitSampling.obj"/-->
-        <!--copy file="LshBitSampling.obj" todir="${build}/net/semanticmetadata/lire/indexing/hashing/"/-->
-
-        <!--copy todir="${dist}/docs">
-            <fileset dir="src/main/docs">
-                <patternset>
-                    <include name="**/*.*"/>
-                    <exclude name="**/CVS/*"/>
-                    <exclude name="**/.svn/*"/>
-                </patternset>
-            </fileset>
-        </copy-->
-
         <jar jarfile="${dist}/lire-request-handler.jar" manifest="default.mf" basedir="${build}">
             <exclude name="**/apache/**" />
         </jar>
-        <!-- copy libs -->
         <mkdir dir="${dist}/lib"/>
         <copy file="lib/commons-codec-1.9.jar" todir="${dist}/lib"/>
         <copy file="lib/jhlabs.jar" todir="${dist}/lib"/>
@@ -162,6 +139,31 @@
             -->
         </java>
     </target>
-	
-	
+        
+        
+    <target name="war" depends="dist">
+        <war destfile="${dist}/${name}.war" webxml="${web}/WEB-INF/web.xml" update="true" manifest="default.mf" basedir="${build}">
+            <exclude name="**/apache/**" />
+            <fileset dir="${web}">
+                <exclude name="${web.dir}/WEB-INF/web.xml"/>
+            </fileset>
+        </war>
+    </target>
+ 
+    
+        
+    <presetdef name="asadmin">
+        <java jar="${asinstalldir}/modules/admin-cli.jar" fork="true" jvm="${java.home}/bin/java" >
+            <arg line="--port 4848" />
+        </java>
+    </presetdef>
+    <target name="deploy">
+        <asadmin failonerror="true">
+            <arg value="deploy" />
+            <arg value="--force=true" />
+            <arg value="dist/${war.file}" />
+        </asadmin>
+    </target>
+ 
+    
 </project>

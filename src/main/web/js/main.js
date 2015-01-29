@@ -1,8 +1,12 @@
+//var serverUrlPrefix = "http://54.235.24.244:8983/solr/media_shard1_replica1/lireq";
+//var searchUrlPrefix = "http://54.235.24.244:8983/solr/media_shard1_replica1/select";
+
 var serverUrlPrefix = "http://localhost:8983/solr/media_shard1_replica1/lireq";
 var searchUrlPrefix = "http://localhost:8983/solr/media_shard1_replica1/select";
 
 function reWriteImageUrl(imgUrlOriginal) {
     imgUrl = "http://localhost/images" + imgUrlOriginal;
+//    imgUrl = "http://107.20.76.134/images" + imgUrlOriginal;
     return imgUrl;
 }
 
