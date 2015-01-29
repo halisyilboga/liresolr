@@ -1,18 +1,49 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * This file is part of the LIRE project: http://www.semanticmetadata.net/lire
+ * LIRE is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * LIRE is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with LIRE; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * We kindly ask you to refer the any or one of the following publications in
+ * any publication mentioning or employing Lire:
+ *
+ * Lux Mathias, Savvas A. Chatzichristofis. Lire: Lucene Image Retrieval –
+ * An Extensible Java CBIR Library. In proceedings of the 16th ACM International
+ * Conference on Multimedia, pp. 1085-1088, Vancouver, Canada, 2008
+ * URL: http://doi.acm.org/10.1145/1459359.1459577
+ *
+ * Lux Mathias. Content Based Image Retrieval with LIRE. In proceedings of the
+ * 19th ACM International Conference on Multimedia, pp. 735-738, Scottsdale,
+ * Arizona, USA, 2011
+ * URL: http://dl.acm.org/citation.cfm?id=2072432
+ *
+ * Mathias Lux, Oge Marques. Visual Information Retrieval using Java and LIRE
+ * Morgan & Claypool, 2013
+ * URL: http://www.morganclaypool.com/doi/abs/10.2200/S00468ED1V01Y201301ICR025
+ *
+ * Copyright statement:
+ * ====================
+ * (c) 2002-2013 by Mathias Lux (mathias@juggle.at)
+ *  http://www.semanticmetadata.net/lire, http://www.lire-project.net
+ *
+ * Updated: 29.01.15 09:39
  */
 package net.semanticmetadata.lire.solr;
 
-/**
- *
- * @author ferdous
- */
+import net.semanticmetadata.lire.DocumentBuilder;
 import net.semanticmetadata.lire.DocumentBuilderFactory;
 import net.semanticmetadata.lire.impl.ChainedDocumentBuilder;
 import net.semanticmetadata.lire.impl.GenericDocumentBuilder;
-import net.semanticmetadata.lire.impl.SimpleBuilder;
 import net.semanticmetadata.lire.indexing.LireCustomCodec;
 import net.semanticmetadata.lire.utils.FileUtils;
 import net.semanticmetadata.lire.utils.LuceneUtils;
@@ -32,7 +63,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
-import net.semanticmetadata.lire.indexing.parallel.WorkItem;
 
 import net.semanticmetadata.lire.imageanalysis.LireFeature;
 import net.semanticmetadata.lire.imageanalysis.ColorLayout;
@@ -54,30 +84,37 @@ import net.semanticmetadata.lire.imageanalysis.LocalBinaryPatterns;
 import net.semanticmetadata.lire.imageanalysis.RotationInvariantLocalBinaryPatterns;
 import net.semanticmetadata.lire.imageanalysis.BinaryPatternsPyramid;
 import net.semanticmetadata.lire.imageanalysis.GenericByteLireFeature;
+import net.semanticmetadata.lire.imageanalysis.SurfFeature;
+import net.semanticmetadata.lire.imageanalysis.bovw.BOVWBuilder;
+import net.semanticmetadata.lire.imageanalysis.bovw.SimpleFeatureBOVWBuilder;
+import net.semanticmetadata.lire.imageanalysis.bovw.SurfFeatureHistogramBuilder;
 
 import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
 import net.semanticmetadata.lire.imageanalysis.spatialpyramid.SPCEDD;
 import net.semanticmetadata.lire.imageanalysis.mser.MSERFeature;
+import net.semanticmetadata.lire.impl.ChainedDocumentBuilder;
+import net.semanticmetadata.lire.impl.SimpleBuilder;
+import net.semanticmetadata.lire.impl.SurfDocumentBuilder;
+import net.semanticmetadata.lire.indexing.parallel.ParallelIndexer;
+import net.semanticmetadata.lire.indexing.parallel.WorkItem;
 
 /**
  * This class allows for creating indexes in a parallel manner. The class at
  * hand reads files from the disk and acts as producer, while several consumer
  * threads extract the features from the given files.
- * <p/>
- * To use this override the method {@link ParallelFullSolrIndexer#addBuilders}
- * to add your own features. Check the source of this class -- the main method
- * -- to get an idea.
+ *
+ * To use this override the method {@link ParallelIndexer#addBuilders} to add
+ * your own features. Check the source of this class -- the main method -- to
+ * get an idea.
  *
  * @author Mathias Lux, mathias@juggle.at, 15.04.13
  */
 public class ParallelFullSolrIndexer implements Runnable {
 
     private Logger log = Logger.getLogger(this.getClass().getName());
-    private final int maxCacheSize = 100;
     private int numberOfThreads = 10;
     private String indexPath;
     private String imageDirectory;
-    //    Stack<WorkItem> images = new Stack<WorkItem>();
     IndexWriter writer;
     File imageList = null;
     boolean ended = false;
@@ -86,16 +123,8 @@ public class ParallelFullSolrIndexer implements Runnable {
     int overallCount = 0, numImages = -1;
     private IndexWriterConfig.OpenMode openMode = IndexWriterConfig.OpenMode.CREATE_OR_APPEND;
     // all xx seconds a status message will be displayed
-    private final int monitoringInterval = 10;
-    private LinkedBlockingQueue<WorkItem> queue = new LinkedBlockingQueue<WorkItem>(maxCacheSize);
-
-    OutputStream dos = null;
-    File fileList = null;
-    File outFile = null;
-    private int maxSideLength = 768;
-    private boolean isPreprocessing = true;
-    private Class imageDataProcessor = null;
-    private static boolean individualFiles = false;
+    private int monitoringInterval = 30;
+    private LinkedBlockingQueue<WorkItem> queue = new LinkedBlockingQueue<WorkItem>(100);
 
     public static void main(String[] args) {
         String indexPath = null;
@@ -140,13 +169,12 @@ public class ParallelFullSolrIndexer implements Runnable {
             printHelp();
             System.exit(-1);
         }
-        ParallelFullSolrIndexer p;
+        ParallelIndexer p;
         if (imageList != null) {
-            p = new ParallelFullSolrIndexer(numThreads, indexPath, imageList) {
+            p = new ParallelIndexer(numThreads, indexPath, imageList) {
                 @Override
                 public void addBuilders(ChainedDocumentBuilder builder) {
-                    builder.addBuilder(new GenericDocumentBuilder(CEDD.class, false));
-                    builder.addBuilder(new GenericDocumentBuilder(OpponentHistogram.class, false));
+                    builder.addBuilder(new GenericDocumentBuilder(CEDD.class, true));
                     builder.addBuilder(new GenericDocumentBuilder(PHOG.class, true));
                     builder.addBuilder(new GenericDocumentBuilder(JCD.class, true));
                     builder.addBuilder(new GenericDocumentBuilder(OpponentHistogram.class, true));
@@ -154,21 +182,15 @@ public class ParallelFullSolrIndexer implements Runnable {
                     builder.addBuilder(new GenericDocumentBuilder(ColorLayout.class, true));
                     builder.addBuilder(new GenericDocumentBuilder(EdgeHistogram.class, true));
                     builder.addBuilder(new GenericDocumentBuilder(SimpleColorHistogram.class, true));
-                    //builder.addBuilder(new GenericDocumentBuilder(AutoColorCorrelogram.class, true));
-
-//                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.CVSURF));
-//                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.CVSIFT));
-                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.Random, 100));
-//                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.GaussRandom));
+                    builder.addBuilder(new GenericDocumentBuilder(AutoColorCorrelogram.class, true));
                 }
             };
 
         } else {
-            p = new ParallelFullSolrIndexer(numThreads, indexPath, imageDirectory) {
+            p = new ParallelIndexer(numThreads, indexPath, imageDirectory) {
                 @Override
                 public void addBuilders(ChainedDocumentBuilder builder) {
-                    builder.addBuilder(new GenericDocumentBuilder(CEDD.class, false));
-                    builder.addBuilder(new GenericDocumentBuilder(OpponentHistogram.class, false));
+                    builder.addBuilder(new GenericDocumentBuilder(CEDD.class, true));
                     builder.addBuilder(new GenericDocumentBuilder(PHOG.class, true));
                     builder.addBuilder(new GenericDocumentBuilder(JCD.class, true));
                     builder.addBuilder(new GenericDocumentBuilder(OpponentHistogram.class, true));
@@ -176,12 +198,7 @@ public class ParallelFullSolrIndexer implements Runnable {
                     builder.addBuilder(new GenericDocumentBuilder(ColorLayout.class, true));
                     builder.addBuilder(new GenericDocumentBuilder(EdgeHistogram.class, true));
                     builder.addBuilder(new GenericDocumentBuilder(SimpleColorHistogram.class, true));
-                    //builder.addBuilder(new GenericDocumentBuilder(AutoColorCorrelogram.class, true));
-
-//                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.CVSURF));
-//                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.CVSIFT));
-                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.Random, 600));
-//                    builder.addBuilder(new SimpleBuilder(new CEDD(), SimpleBuilder.KeypointDetector.GaussRandom));
+                    builder.addBuilder(new GenericDocumentBuilder(AutoColorCorrelogram.class, true));
                 }
             };
         }
@@ -194,7 +211,7 @@ public class ParallelFullSolrIndexer implements Runnable {
     private static void printHelp() {
         System.out.println("Usage:\n"
                 + "\n"
-                + "$> ParallelFullSolrIndexer -i <index> <-d <image-directory> | -l <image-list>> [-n <number of threads>]\n"
+                + "$> ParallelIndexer -i <index> <-d <image-directory> | -l <image-list>> [-n <number of threads>]\n"
                 + "\n"
                 + "index             ... The directory of the index. Will be appended or created if not existing.\n"
                 + "images-directory  ... The directory the images are found in. It's traversed recursively.\n"
@@ -217,6 +234,7 @@ public class ParallelFullSolrIndexer implements Runnable {
     }
 
     /**
+     *
      * @param numberOfThreads
      * @param indexPath
      * @param imageDirectory
@@ -272,10 +290,11 @@ public class ParallelFullSolrIndexer implements Runnable {
         builder.addBuilder(DocumentBuilderFactory.getLuminanceLayoutDocumentBuilder());
         builder.addBuilder(DocumentBuilderFactory.getColorHistogramDocumentBuilder());
 
+        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderRandomDocumentBuilder());
 //        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderCVSIFTDocumentBuilder());
 //        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderCVSURFDocumentBuilder());
-        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderRandomDocumentBuilder());
 //        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderGaussRandomDocumentBuilder());
+
     }
 
     public void run() {
@@ -301,7 +320,6 @@ public class ParallelFullSolrIndexer implements Runnable {
             }
             numImages = files.size();
             System.out.println("Indexing " + files.size() + " images.");
-
             Thread p = new Thread(new Producer());
             p.start();
             LinkedList<Thread> threads = new LinkedList<Thread>();
@@ -323,12 +341,12 @@ public class ParallelFullSolrIndexer implements Runnable {
             // System.out.println("Analyzed " + overallCount + " images in " + seconds + " seconds, ~" + ((overallCount>0)?(l1 / overallCount):"n.a.") + " ms each.");
             System.out.printf("Analyzed %d images in %03d:%02d ~ %3.2f ms each.\n", overallCount, minutes, seconds, ((overallCount > 0) ? ((float) l1 / (float) overallCount) : -1f));
             writer.commit();
+            writer.forceMerge(1);
             writer.close();
             threadFinished = true;
             // add local feature hist here
-            
-        } catch (IOException | InterruptedException ioix) {
-            ioix.printStackTrace();
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -391,8 +409,8 @@ public class ParallelFullSolrIndexer implements Runnable {
                     byte[] buffer = Files.readAllBytes(Paths.get(path)); // JDK 7 only!
                     path = next.getCanonicalPath();
                     queue.put(new WorkItem(path, buffer));
-                } catch (IOException | InterruptedException ioie) {
-                    System.err.println("Could not open " + path + ". " + ioie.getMessage());
+                } catch (IOException | InterruptedException e) {
+                    System.err.println("Could not open " + path + ". " + e.getMessage());
                 }
             }
             for (int i = 0; i < numberOfThreads * 3; i++) {
@@ -400,8 +418,8 @@ public class ParallelFullSolrIndexer implements Runnable {
                 byte[] b = null;
                 try {
                     queue.put(new WorkItem(s, b));
-                } catch (InterruptedException ie) {
-                    ie.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
             ended = true;
@@ -435,18 +453,18 @@ public class ParallelFullSolrIndexer implements Runnable {
                         overallCount++;
                     }
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    //log.severe(e.getMessage());
+                    // e.printStackTrace();
+                    log.severe(e.getMessage());
                 }
                 try {
                     if (!locallyEnded && tmp != null) {
                         ByteArrayInputStream b = new ByteArrayInputStream(tmp.getBuffer());
                         BufferedImage img = ImageIO.read(b);
                         Document d = builder.createDocument(img, tmp.getFileName());
-                        writer.addDocument(d);                        
+                        writer.addDocument(d);
                     }
-                } catch (Exception ex) {
-                    System.err.println(ex.getMessage());
+                } catch (IOException e) {
+                     e.printStackTrace();
                 }
 //                synchronized (images) {
 //                    // we wait for the stack to be either filled or empty & not being filled any more.
@@ -474,7 +492,7 @@ public class ParallelFullSolrIndexer implements Runnable {
 //                        writer.addDocument(d);
 //                    }
 //                } catch (Exception e) {
-//                    System.err.println("[ParallelFullSolrIndexer] Could not handle file " + tmp.getFileName() + ": "  + e.getMessage());
+//                    System.err.println("[ParallelIndexer] Could not handle file " + tmp.getFileName() + ": "  + e.getMessage());
 //                    e.printStackTrace();
 //                }
             }

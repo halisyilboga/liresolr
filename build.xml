@@ -4,6 +4,8 @@
     </description>
     <property environment="env"/>
     <property name="asinstalldir" value="${env.GLASSFISH_HOME}"/>    
+    <property name="asinstalldir" value="${env.SOLR_LIB_HOME}"/>    
+    <property name="solrlib" value="${env.SOLR_LIB_HOME}"/>
     <property name="name" value="LireRequestHandler"/>
     <property name="war.file" value="LireRequestHandler.war"/>
     <property name="src" value="src/main/java"/>
@@ -18,9 +20,6 @@
     <property name="doc" value="src/main/docs"/>
     <!-- path to additional files like installer scripts, icons and batch files -->
     <property name="add.files" value="add.files"/>
-    <!--<property name="solrlib" value="/data/digitalcandy/fusion/fusion/jetty/solr/webapps/solr/WEB-INF/lib/"/>-->
-    <property name="solrlib" value="/Users/ferdous/projects/digitalcandy/fusion/jetty/solr/webapps/solr/WEB-INF/lib/"/>
-
     
     <!-- define the classpath  -->
     <path id="classpath.path">
@@ -94,7 +93,7 @@
         <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer" fork="true" maxmemory="2048M" error="indexer_error.log" output="indexer_output.log">
             <jvmarg line="-Xmx2048M -Djava.library.path=lib/opencv"/>
             <!-- adapt this argument to use your pictures -->
-            <arg line="-i out.txt -o docs.xml -n 16"/>
+            <arg line="-i ./out.txt -o ./docs.xml -n 16 -p"/>
             <!--<arg line="-d ./testdata -i ./idx-test -n 16"/>-->
             <!--
                 Usage:
@@ -148,16 +147,15 @@
                 <exclude name="${web.dir}/WEB-INF/web.xml"/>
             </fileset>
         </war>
-    </target>
- 
-    
+    </target>    
         
     <presetdef name="asadmin">
         <java jar="${asinstalldir}/modules/admin-cli.jar" fork="true" jvm="${java.home}/bin/java" >
             <arg line="--port 4848" />
         </java>
     </presetdef>
-    <target name="deploy">
+    
+    <target name="deploy_to_glassfish4">
         <asadmin failonerror="true">
             <arg value="deploy" />
             <arg value="--force=true" />

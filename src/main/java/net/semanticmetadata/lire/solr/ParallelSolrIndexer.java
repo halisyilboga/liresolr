@@ -39,18 +39,6 @@
 
 package net.semanticmetadata.lire.solr;
 
-import com.jhlabs.image.DespeckleFilter;
-import net.semanticmetadata.lire.indexing.hashing.BitSampling;
-import net.semanticmetadata.lire.indexing.parallel.WorkItem;
-import net.semanticmetadata.lire.solr.indexing.ImageDataProcessor;
-import org.apache.commons.codec.binary.Base64;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
-import net.semanticmetadata.lire.utils.ImageUtils;
 
 import net.semanticmetadata.lire.imageanalysis.LireFeature;
 import net.semanticmetadata.lire.imageanalysis.ColorLayout;
@@ -72,10 +60,31 @@ import net.semanticmetadata.lire.imageanalysis.LocalBinaryPatterns;
 import net.semanticmetadata.lire.imageanalysis.RotationInvariantLocalBinaryPatterns;
 import net.semanticmetadata.lire.imageanalysis.BinaryPatternsPyramid;
 import net.semanticmetadata.lire.imageanalysis.GenericByteLireFeature;
+import net.semanticmetadata.lire.imageanalysis.SurfFeature;
+import net.semanticmetadata.lire.imageanalysis.bovw.BOVWBuilder;
+import net.semanticmetadata.lire.imageanalysis.bovw.SimpleFeatureBOVWBuilder;
+import net.semanticmetadata.lire.imageanalysis.bovw.SurfFeatureHistogramBuilder;
 
 import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
 import net.semanticmetadata.lire.imageanalysis.spatialpyramid.SPCEDD;
 import net.semanticmetadata.lire.imageanalysis.mser.MSERFeature;
+import net.semanticmetadata.lire.impl.ChainedDocumentBuilder;
+import net.semanticmetadata.lire.impl.SimpleBuilder;
+import net.semanticmetadata.lire.impl.SurfDocumentBuilder;
+import net.semanticmetadata.lire.indexing.parallel.ParallelIndexer;
+
+import com.jhlabs.image.DespeckleFilter;
+import net.semanticmetadata.lire.indexing.hashing.BitSampling;
+import net.semanticmetadata.lire.indexing.parallel.WorkItem;
+import net.semanticmetadata.lire.solr.indexing.ImageDataProcessor;
+import net.semanticmetadata.lire.utils.ImageUtils;
+import org.apache.commons.codec.binary.Base64;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * This indexing application allows for parallel extraction of global features from multiple image files for
@@ -106,7 +115,6 @@ import net.semanticmetadata.lire.imageanalysis.mser.MSERFeature;
  */
 public class ParallelSolrIndexer implements Runnable {
     private final int maxCacheSize = 100;
-    //    private static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(5);
     private boolean force = false;
     private static boolean individualFiles = false;
     private static int numberOfThreads = 4;
@@ -115,11 +123,10 @@ public class ParallelSolrIndexer implements Runnable {
     int overallCount = 0;
     OutputStream dos = null;
     Set<Class> listOfFeatures;
-
     File fileList = null;
     File outFile = null;
     private int monitoringInterval = 10;
-    private int maxSideLength = 512;
+    private int maxSideLength = 800;
     private boolean isPreprocessing = true;
     private Class imageDataProcessor = null;
 
@@ -194,7 +201,7 @@ public class ParallelSolrIndexer implements Runnable {
                         if (imageDataProcessorClass.newInstance() instanceof ImageDataProcessor)
                             e.setImageDataProcessor(imageDataProcessorClass);
                     } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e1) {
-                        System.err.println("Did not find imageProcessor class: " + e1.getMessage());
+                        //System.err.println("Did not find imageProcessor class: " + e1.getMessage());
                         printHelp();
                         System.exit(0);
                     }
@@ -222,9 +229,9 @@ public class ParallelSolrIndexer implements Runnable {
                 if ((i + 1) < args.length)
                     try {
                         ParallelSolrIndexer.numberOfThreads = Integer.parseInt(args[i + 1]);
-                    } catch (Exception e1) {
-                        System.err.println("Could not set number of threads to \"" + args[i + 1] + "\".");
-                        e1.printStackTrace();
+                    } catch (Exception ex) {
+                        //System.err.println("Could not set number of threads to \"" + args[i + 1] + "\".");
+                        ex.printStackTrace();
                     }
                 else printHelp();
             }
@@ -361,6 +368,7 @@ public class ParallelSolrIndexer implements Runnable {
                 dos.close();
             }
 //            writer.commit();
+//            writer.forceMerge(1);
 //            writer.close();
 //            threadFinished = true;
 
@@ -434,7 +442,7 @@ public class ParallelSolrIndexer implements Runnable {
                         String path = next.getCanonicalPath();
                         images.put(new WorkItem(path, buffer));
                     } catch (IOException | InterruptedException e) {
-                        System.err.println("Could not read image " + file + ": " + e.getMessage());
+                        //System.err.println("Could not read image " + file + ": " + e.getMessage());
                     }
                 }
                 for (int i = 0; i < numberOfThreads*2; i++) {
@@ -442,13 +450,13 @@ public class ParallelSolrIndexer implements Runnable {
                     BufferedImage tmpImg = null;
                     try {
                         images.put(new WorkItem(tmpString, tmpImg));
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+                    } catch (InterruptedException ie) {
+                        ie.printStackTrace();
                     }
                 }
 
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
             }
             ended = true;
         }
@@ -519,7 +527,7 @@ public class ParallelSolrIndexer implements Runnable {
                                 idp = (ImageDataProcessor) imageDataProcessor.newInstance();
                             }
                         } catch (InstantiationException | IllegalAccessException e) {
-                            System.err.println("Could not instantiate ImageDataProcessor!");
+                            //System.err.println("Could not instantiate ImageDataProcessor!");
                             e.printStackTrace();
                         }
                         // --------< creating doc >-------------------------
@@ -585,7 +593,7 @@ public class ParallelSolrIndexer implements Runnable {
 //                        }
 //                    }
                 } catch (InterruptedException | IOException e) {
-                    System.err.println("Error processing file " + tmp.getFileName());
+                    //System.err.println("Error processing file " + tmp.getFileName());
                     e.printStackTrace();
                 }
             }
