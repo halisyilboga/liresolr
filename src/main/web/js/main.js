@@ -1,12 +1,14 @@
-//var serverUrlPrefix = "http://54.235.24.244:8983/solr/media_shard1_replica1/lireq";
-//var searchUrlPrefix = "http://54.235.24.244:8983/solr/media_shard1_replica1/select";
+//var HOST = "localhost";
+//var SOLR_HOST = "localhost";
 
-var serverUrlPrefix = "http://localhost:8983/solr/media_shard1_replica1/lireq";
-var searchUrlPrefix = "http://localhost:8983/solr/media_shard1_replica1/select";
+var HOST = "107.20.76.134";
+var SOLR_HOST = "54.235.24.244";
+
+var serverUrlPrefix = "http://" + SOLR_HOST + ":8983/solr/media_shard1_replica1/lireq";
+var searchUrlPrefix = "http://" + SOLR_HOST + ":8983/solr/media_shard1_replica1/select";
 
 function reWriteImageUrl(imgUrlOriginal) {
-    imgUrl = "http://localhost/images" + imgUrlOriginal;
-//    imgUrl = "http://107.20.76.134/images" + imgUrlOriginal;
+    imgUrl = "http://" + HOST + "/images" + imgUrlOriginal;
     return imgUrl;
 }
 
@@ -21,7 +23,6 @@ function getCBIRLinks(myID) {
     result += "<a href=\"javascript:search('" + myID + "', 'jh_ha');\">jh</a> ";
     result += "<a href=\"javascript:search('" + myID + "', 'oh_ha');\">oh</a> ";
     result += "<a href=\"javascript:search('" + myID + "', 'jp_ha');\">jp</a> ";
-    result += "<a href=\"javascript:search('" + myID + "', 'fo_ha');\">fo</a> ";
     result += "<a href=\"javascript:search('" + myID + "', 'cl_ha');\">CL</a> ";
     result += "<a href=\"javascript:search('" + myID + "', 'ce_ha');\">CE</a> ";
     result += "<a href=\"javascript:search('" + myID + "', 'eh_ha');\">EH</a> ";
@@ -164,7 +165,7 @@ $(document).ready(function () {
     // get JSON-formatted data from the server
     $("#perf").html("Please stand by .... <img src=\"img/loader-light.gif\"/>");
 
-    $.ajax("http://localhost:8983/solr/media_shard1_replica1/lireq?field=sc_ha&wt=json&url=http://192.168.1.142/images/data/digitalcandy/ml/images/Faces/image_0025.jpg", {
+    $.ajax(serverUrlPrefix + "?field=sc_ha&wt=json&url=http://" + HOST + "/images/data/digitalcandy/ml/images/sunflower/image_0031.jpg", {
         dataType: 'jsonp',
         'jsonp': 'json.wrf',
         'wt': 'json',
