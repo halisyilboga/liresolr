@@ -8,8 +8,7 @@ var serverUrlPrefix = "http://" + SOLR_HOST + ":8983/solr/media_shard1_replica1/
 var searchUrlPrefix = "http://" + SOLR_HOST + ":8983/solr/media_shard1_replica1/select";
 
 function reWriteImageUrl(imgUrlOriginal) {
-    imgUrl = "http://" + HOST + "/images" + imgUrlOriginal;
-    return imgUrl;
+    return "http://" + HOST + "/images" + imgUrlOriginal;
 }
 
 function getCBIRLinks(myID) {
@@ -194,7 +193,7 @@ function extract(field, url) {
 //    $.getJSON(serverUrl, function (myResult) {
             console.log(myResult);
 
-            if (!JSON.stringify(myResult.Error)) {
+            if (!myResult.Error) {
                 $('#sorthist').val(encodeURIComponent(field + ",\"" + myResult.histogram + "\""));
                 tagSearchDo(); // do tag search ...
             }
@@ -241,10 +240,8 @@ function hashSearch(field, url) {
         'jsonp': 'json.wrf',
         'wt': 'json',
         success: function (myResult) {
-
-//    $.getJSON(serverUrl, function (myResult) {
             console.log(myResult);
-            if (!JSON.stringify(myResult.Error)) {
+            if (!myResult.Error) {
                 var hashString = "";
                 var numHashes = 35;
                 if ($("#slider-1").val()) {
@@ -265,21 +262,16 @@ function hashSearch(field, url) {
                     queryString = queryString + "&fq={!frange l=0 u=" + getRange(field) + " cache=false cost=100}lirefunc(" + encodeURIComponent(field + ",\"" + myResult.histogram + "\"") + ")"; // range
                     console.log("Using range");
                 }
-
                 console.log(queryString);
-
-                // now get the results:
                 $.ajax(queryString, {
                     dataType: 'jsonp',
                     'jsonp': 'json.wrf',
                     'wt': 'json',
                     success: function (myResult2) {
-
-//                $.getJSON(queryString, function (myResult2) {
-                        //$("#perf").html("Search took " + myResult2.responseHeader.QTime + " ms, " + myResult2.response.numFound + " documents found");
+                        $("#perf").html("Search took " + myResult2.responseHeader.QTime + " ms, " + myResult2.response.numFound + " documents found");
                         console.log(myResult2);
 
-                        if (!JSON.stringify(myResult2.Error)) {
+                        if (!myResult2.Error) {
                             printResults(myResult2.response.docs);
                         }
                         else {
@@ -319,12 +311,10 @@ function search(idString, field) {
         'jsonp': 'json.wrf',
         'wt': 'json',
         success: function (myResult) {
-
-//    $.getJSON(serverUrl, function (myResult) {
             $("#perf").html("Index search time: " + myResult.responseHeader.QTime + " ms (query " + myResult.RawDocsSearchTime + " ms, rank " + myResult.ReRankSearchTime + " ms)");
             console.log(myResult);
 
-            if (!JSON.stringify(myResult.Error)) {
+            if (!myResult.Error) {
                 printResults(myResult.response.docs);
             }
             else {
