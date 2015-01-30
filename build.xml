@@ -4,7 +4,6 @@
     </description>
     <property environment="env"/>
     <property name="asinstalldir" value="${env.GLASSFISH_HOME}"/>    
-    <property name="asinstalldir" value="${env.SOLR_LIB_HOME}"/>    
     <property name="solrlib" value="${env.SOLR_LIB_HOME}"/>
     <property name="name" value="LireRequestHandler"/>
     <property name="war.file" value="LireRequestHandler.war"/>
@@ -90,8 +89,8 @@
     </target>
     	
     <target name="index" depends="clean,compile">
-        <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer" fork="true" maxmemory="2048M" error="indexer_error.log" output="indexer_output.log">
-            <jvmarg line="-Xmx2048M -Djava.library.path=lib/opencv"/>
+        <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer" fork="true" maxmemory="6g" error="indexer_error.log" output="indexer_output.log">
+            <jvmarg line="-Xmx6g -Djava.library.path=lib/opencv -server"/>
             <!-- adapt this argument to use your pictures -->
             <arg line="-i ./out.txt -o ./docs.xml -n 16 -p"/>
             <!--<arg line="-d ./testdata -i ./idx-test -n 16"/>-->
@@ -144,7 +143,7 @@
         <war destfile="${dist}/${name}.war" webxml="${web}/WEB-INF/web.xml" update="true" manifest="default.mf" basedir="${build}">
             <exclude name="**/apache/**" />
             <fileset dir="${web}">
-                <exclude name="${web.dir}/WEB-INF/web.xml"/>
+                <exclude name="${web}/WEB-INF/web.xml"/>
             </fileset>
         </war>
     </target>    

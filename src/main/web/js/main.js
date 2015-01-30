@@ -35,8 +35,8 @@ function getCBIRLinks(myID) {
     result += "<a href=\"javascript:hashSearch('ga','" + imageUrl + "');\">ga</a> "
     result += "<a href=\"javascript:hashSearch('ll','" + imageUrl + "');\">ll</a> "
     result += "<a href=\"javascript:hashSearch('lo','" + imageUrl + "');\">lo</a> "
-    result += "<a href=\"javascript:hashSearch('fc','" + imageUrl + "');\">fc</a> "
     result += "<a href=\"javascript:hashSearch('fo','" + imageUrl + "');\">fo</a> "
+    result += "<a href=\"javascript:hashSearch('fc','" + imageUrl + "');\">fc</a> "
     result += "<a href=\"javascript:hashSearch('jh','" + imageUrl + "');\">jh</a> "
     result += "<a href=\"javascript:hashSearch('oh','" + imageUrl + "');\">oh</a> "
     result += "<a href=\"javascript:hashSearch('jp','" + imageUrl + "');\">jp</a> "
@@ -67,7 +67,7 @@ function printResults(docs) {
             col = "ui-block-d";
         }
         recent = $("<div class=\"" + col + "\"><div style=\"height:170px\"><img style=\"max-width:160px;max-height:160px;display: block;margin-left: auto;margin-right: auto;\" src=\"" + imageUrl + "\" /></div>"
-                + "score=" + (docs[i].d || 'none')
+                + "score=" + (docs[i].d || '0.00')
                 + getCBIRLinks(myID)
                 + "</div>");
         last.append(recent);
@@ -147,7 +147,9 @@ function tagSearchDo() {
                         + "<a href=\"javascript:extract('ph','" + imageUrl + "');\">ph</a> "
                         + "<a href=\"javascript:extract('sc','" + imageUrl + "');\">sc</a> "
                         + "<a href=\"javascript:extract('ll','" + imageUrl + "');\">ll</a> "
+                        + "<a href=\"javascript:extract('lo','" + imageUrl + "');\">lo</a> "
                         + "<a href=\"javascript:extract('ga','" + imageUrl + "');\">ga</a> "
+                        + "<a href=\"javascript:extract('ro','" + imageUrl + "');\">ro</a> "
                         + "<a href=\"javascript:extract('ta','" + imageUrl + "');\">ta</a><br/>"
                         + "</p></div></div>");
 
