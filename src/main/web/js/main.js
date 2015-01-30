@@ -1,8 +1,8 @@
-//var HOST = "localhost";
-//var SOLR_HOST = "localhost";
+var HOST = "localhost";
+var SOLR_HOST = "localhost";
 
-var HOST = "107.20.76.134";
-var SOLR_HOST = "54.235.24.244";
+//var HOST = "107.20.76.134";
+//var SOLR_HOST = "54.235.24.244";
 
 var serverUrlPrefix = "http://" + SOLR_HOST + ":8983/solr/media_shard1_replica1/lireq";
 var searchUrlPrefix = "http://" + SOLR_HOST + ":8983/solr/media_shard1_replica1/select";
@@ -18,6 +18,7 @@ function getCBIRLinks(myID) {
     result += "<a href=\"javascript:search('" + myID + "', 'ta_ha');\">ta</a> ";
     result += "<a href=\"javascript:search('" + myID + "', 'ga_ha');\">ga</a> ";
     result += "<a href=\"javascript:search('" + myID + "', 'll_ha');\">ll</a> ";
+    result += "<a href=\"javascript:search('" + myID + "', 'lo_ha');\">lo</a> ";
     result += "<a href=\"javascript:search('" + myID + "', 'fo_ha');\">fo</a> ";
     result += "<a href=\"javascript:search('" + myID + "', 'fc_ha');\">fc</a> ";
     result += "<a href=\"javascript:search('" + myID + "', 'jh_ha');\">jh</a> ";
@@ -28,11 +29,13 @@ function getCBIRLinks(myID) {
     result += "<a href=\"javascript:search('" + myID + "', 'eh_ha');\">EH</a> ";
     result += "<a href=\"javascript:search('" + myID + "', 'jc_ha');\">JC</a> ";
     result += "<a href=\"javascript:search('" + myID + "', 'ph_ha');\">PH</a> ";
+    result += "<a href=\"javascript:search('" + myID + "', 'ro_ha');\">ro</a> ";
     result += "<a href=\"javascript:search('" + myID + "', 'sc_ha');\">SC</a> ";
     result += "</p><p>"
     result += "<a href=\"javascript:hashSearch('ta','" + imageUrl + "');\">ta</a> "
     result += "<a href=\"javascript:hashSearch('ga','" + imageUrl + "');\">ga</a> "
     result += "<a href=\"javascript:hashSearch('ll','" + imageUrl + "');\">ll</a> "
+    result += "<a href=\"javascript:hashSearch('lo','" + imageUrl + "');\">lo</a> "
     result += "<a href=\"javascript:hashSearch('fc','" + imageUrl + "');\">fc</a> "
     result += "<a href=\"javascript:hashSearch('fo','" + imageUrl + "');\">fo</a> "
     result += "<a href=\"javascript:hashSearch('jh','" + imageUrl + "');\">jh</a> "
@@ -43,6 +46,7 @@ function getCBIRLinks(myID) {
     result += "<a href=\"javascript:hashSearch('eh','" + imageUrl + "');\">EH</a> "
     result += "<a href=\"javascript:hashSearch('jc','" + imageUrl + "');\">JC</a> "
     result += "<a href=\"javascript:hashSearch('ph','" + imageUrl + "');\">PH</a> "
+    result += "<a href=\"javascript:hashSearch('ro','" + imageUrl + "');\">ro</a> "
     result += "<a href=\"javascript:hashSearch('sc','" + imageUrl + "');\">SC</a></p></div>"
     return result;
 }
@@ -64,7 +68,7 @@ function printResults(docs) {
             col = "ui-block-d";
         }
         recent = $("<div class=\"" + col + "\"><div style=\"height:170px\"><img style=\"max-width:160px;max-height:160px;display: block;margin-left: auto;margin-right: auto;\" src=\"" + imageUrl + "\" /></div>"
-                + "score=" + (docs[i].d || 0)
+                + "score=" + (docs[i].d || 'none')
                 + getCBIRLinks(myID)
                 + "</div>");
         last.append(recent);
@@ -96,7 +100,7 @@ function tagSearchDo() {
         }
 
     }
-    // http://localhost:9000/solr/lire/select?q=tags%3Aaustria%0A&wt=json&indent=true
+    // http://localhost:8983/solr/media_shard1_replica1/select?q=tags%3Aaustria%0A&wt=json&indent=true
     console.log(queryString);
 
     $.ajax(serverUrl, {
@@ -165,13 +169,11 @@ $(document).ready(function () {
     // get JSON-formatted data from the server
     $("#perf").html("Please stand by .... <img src=\"img/loader-light.gif\"/>");
 
-    $.ajax(serverUrlPrefix + "?field=sc_ha&wt=json&url=http://" + HOST + "/images/data/digitalcandy/ml/images/sunflower/image_0031.jpg", {
+    $.ajax(serverUrlPrefix + "?start=0&rows=60&q=*:*&accuracy=0.33&candidates=30000&field=ph_ha&url=http://" + HOST + "/images/data/digitalcandy/ml/images/sunflower/image_0031.jpg", {
         dataType: 'jsonp',
         'jsonp': 'json.wrf',
         'wt': 'json',
         success: function (myResult) {
-
-//    $.getJSON(serverUrlPrefix, function (myResult) {
             $("#perf").html("Index search time: " + myResult.responseHeader.QTime + " ms");
             console.log(myResult);
             printResults(myResult.response.docs);
@@ -292,7 +294,6 @@ function hashSearch(field, url) {
 }
 
 function search(idString, field) {
-    // console.log(idString);
     // clear the old data
     $(".ui-grid-c").remove();
     $("#perf").html("Please stand by .... <img src=\"img/loader-light.gif\"/>");
@@ -301,11 +302,16 @@ function search(idString, field) {
     // console.log($("#slider-1").val());
 
     // get all the new data from the server ...
-    serverUrl = serverUrlPrefix + "?rows=30&id=" + idString + "&field=" + field;
+    serverUrl = serverUrlPrefix + "?start=0&rows=30&id=" + idString + "&field=" + field;
     if ($("#slider-1").val())
         serverUrl += "&accuracy=" + $("#slider-1").val();
+    else
+        serverUrl += "&accuracy=0.33";
     if ($("#slider-can").val())
         serverUrl += "&candidates=" + $("#slider-can").val();
+    else
+        serverUrl += "&candidates=30000";
+
     console.log(serverUrl);
 
     $.ajax(serverUrl, {
@@ -336,11 +342,15 @@ function searchUrl(field) {
     $(".title").html("Results for query \"" + $("#urlq").val().substring(0, 12) + "...\"");
 
     // get all the new data from the server ...
-    serverUrl = serverUrlPrefix + "?rows=30&url=" + $("#urlq").val() + "&field=" + field;
+    serverUrl = serverUrlPrefix + "?start=0&rows=30&url=" + $("#urlq").val() + "&field=" + field;
     if ($("#slider-1").val())
         serverUrl += "&accuracy=" + $("#slider-1").val();
+    else
+        serverUrl += "&accuracy=0.33";
     if ($("#slider-can").val())
         serverUrl += "&candidates=" + $("#slider-can").val();
+    else
+        serverUrl += "&candidates=30000";
 
     console.log(serverUrl);
 
@@ -349,8 +359,6 @@ function searchUrl(field) {
         'jsonp': 'json.wrf',
         'wt': 'json',
         success: function (myResult) {
-
-//    $.getJSON(serverUrl, function (myResult) {
             $("#perf").html("Index search time: " + myResult.responseHeader.QTime + " ms (query " + myResult.RawDocsSearchTime + " ms, rank " + myResult.ReRankSearchTime + " ms)");
             console.log(myResult);
             printResults(myResult.response.docs);

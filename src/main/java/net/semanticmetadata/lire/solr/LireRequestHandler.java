@@ -523,7 +523,7 @@ public class LireRequestHandler extends RequestHandlerBase {
 
     @Override
     public String getVersion() {
-        return "0.9.5-SNAPSHOT";
+        return "0.9.5";
     }
 
     @Override
