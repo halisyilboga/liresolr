@@ -1,6 +1,5 @@
 package net.semanticmetadata.lire.solr;
 
-import net.semanticmetadata.lire.imageanalysis.*;
 import net.semanticmetadata.lire.indexing.hashing.BitSampling;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.solr.handler.dataimport.Context;
@@ -13,9 +12,31 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import net.semanticmetadata.lire.imageanalysis.LireFeature;
+import net.semanticmetadata.lire.imageanalysis.ColorLayout;
+import net.semanticmetadata.lire.imageanalysis.EdgeHistogram;
+import net.semanticmetadata.lire.imageanalysis.JCD;
+import net.semanticmetadata.lire.imageanalysis.OpponentHistogram;
+import net.semanticmetadata.lire.imageanalysis.PHOG;
+import net.semanticmetadata.lire.imageanalysis.AutoColorCorrelogram;
+import net.semanticmetadata.lire.imageanalysis.CEDD;
+import net.semanticmetadata.lire.imageanalysis.FCTH;
+import net.semanticmetadata.lire.imageanalysis.FuzzyOpponentHistogram;
+import net.semanticmetadata.lire.imageanalysis.ScalableColor;
+import net.semanticmetadata.lire.imageanalysis.Gabor;
+import net.semanticmetadata.lire.imageanalysis.Tamura;
+import net.semanticmetadata.lire.imageanalysis.LuminanceLayout;
+import net.semanticmetadata.lire.imageanalysis.JpegCoefficientHistogram;
+import net.semanticmetadata.lire.imageanalysis.SimpleColorHistogram;
+import net.semanticmetadata.lire.imageanalysis.LocalBinaryPatterns;
+import net.semanticmetadata.lire.imageanalysis.RotationInvariantLocalBinaryPatterns;
+import net.semanticmetadata.lire.imageanalysis.BinaryPatternsPyramid;
+import net.semanticmetadata.lire.imageanalysis.GenericByteLireFeature;
 
-import static org.apache.solr.handler.dataimport.DataImportHandlerException.SEVERE;
-import static org.apache.solr.handler.dataimport.DataImportHandlerException.wrapAndThrow;
+import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
+import net.semanticmetadata.lire.imageanalysis.spatialpyramid.SPCEDD;
+import net.semanticmetadata.lire.imageanalysis.mser.MSERFeature;
+
 import static org.apache.solr.handler.dataimport.XPathEntityProcessor.URL;
 
 /**
@@ -26,61 +47,92 @@ import static org.apache.solr.handler.dataimport.XPathEntityProcessor.URL;
  * @author Mathias Lux, mathias@juggle.at on 17.12.13.
  */
 public class LireEntityProcessor extends EntityProcessorBase {
-	protected boolean done = false;
-	protected LireFeature[] listOfFeatures = new LireFeature[]{
-			new ColorLayout(), new PHOG(), new EdgeHistogram(), new JCD(), new OpponentHistogram()
-	};
-	protected static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(5);
-	int count = 0;
+    protected boolean done = false;
+    protected LireFeature[] listOfFeatures = new LireFeature[]{
+      new ColorLayout(),
+      new EdgeHistogram(),
+      new PHOG(),
+      new JCD(),
+      new CEDD(),
+      new ScalableColor(),
+      new OpponentHistogram(),
+      new FCTH(),
+      new FuzzyOpponentHistogram(),
+      new JointHistogram(),
+      new Gabor(),
+      new Tamura(),
+      new LuminanceLayout(),
+      new JpegCoefficientHistogram(),
+      new SimpleColorHistogram(),
+      new LocalBinaryPatterns(),
+      new RotationInvariantLocalBinaryPatterns(),
+      new BinaryPatternsPyramid()
+    };
+    
+      protected static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(18);
+      int count = 0;
 
-	static {
-		classToPrefix.put(ColorLayout.class, "cl");
-		classToPrefix.put(EdgeHistogram.class, "eh");
-		classToPrefix.put(OpponentHistogram.class, "oh");
+      static {
+        classToPrefix.put(ColorLayout.class, "cl");
+        classToPrefix.put(EdgeHistogram.class, "eh");
         classToPrefix.put(PHOG.class, "ph");
-		classToPrefix.put(JCD.class, "jc");
-		classToPrefix.put(SurfSolrFeature.class, "su");
-	}
+        classToPrefix.put(JCD.class, "jc");
+        classToPrefix.put(CEDD.class, "ce");
+        classToPrefix.put(ScalableColor.class, "sc");
+        classToPrefix.put(OpponentHistogram.class, "oh");
+        classToPrefix.put(FCTH.class, "fc");
+        classToPrefix.put(FuzzyOpponentHistogram.class, "fo");
+        classToPrefix.put(JointHistogram.class, "jh");
+        classToPrefix.put(Gabor.class, "ga");
+        classToPrefix.put(Tamura.class, "ta");
+        classToPrefix.put(LuminanceLayout.class, "ll");
+        classToPrefix.put(JpegCoefficientHistogram.class, "jp");
+        classToPrefix.put(SimpleColorHistogram.class, "si");
+        classToPrefix.put(LocalBinaryPatterns.class, "lo");
+        classToPrefix.put(RotationInvariantLocalBinaryPatterns.class, "ro");
+        classToPrefix.put(BinaryPatternsPyramid.class, "bi");
+      }
 
 
-	protected void firstInit(Context context) {
-		super.firstInit(context);
-		done = false;
-	}
+    protected void firstInit(Context context) {
+        super.firstInit(context);
+        done = false;
+    }
 
-	/**
-	 * @return a row where the key is the name of the field and value can be any Object or a Collection of objects. Return
-	 * null to signal end of rows
-	 */
-	public Map<String, Object> nextRow() {
-		if (done) {
-			done = false;
-			return null;
-		}
-		Map<String, Object> row = new HashMap<String, Object>();
-		DataSource<InputStream> dataSource = context.getDataSource();
-		// System.out.println("\n**** " + context.getResolvedEntityAttribute(URL));
-		InputStream is = dataSource.getData(context.getResolvedEntityAttribute(URL));
-		row.put("id", context.getResolvedEntityAttribute(URL));
-		// here we have to open the stream and extract the features. Then we put them into the row object.
-		// basically I hope that the entity processor is called for each entity anew, otherwise this approach won't work.
-		try {
-			BufferedImage img = ImageIO.read(is);
-			row.put("id", context.getResolvedEntityAttribute(URL));
-			for (int i = 0; i < listOfFeatures.length; i++) {
-				LireFeature feature = listOfFeatures[i];
-				feature.extract(img);
-				String histogramField = classToPrefix.get(feature.getClass()) + "_hi";
-				String hashesField = classToPrefix.get(feature.getClass()) + "_ha";
-				row.put(histogramField, Base64.encodeBase64String(feature.getByteArrayRepresentation()));
-				row.put(hashesField, ParallelSolrIndexer.arrayToString(BitSampling.generateHashes(feature.getDoubleHistogram())));
-			}
-		} catch (IOException e) {
-			wrapAndThrow(SEVERE, e, "Error loading image or extracting features.");
-		}
-		// if (count++>10)
-		done = true;
-		// dataSource.close();
-		return row;
-	}
+    /**
+     * @return a row where the key is the name of the field and value can be any Object or a Collection of objects. Return
+     * null to signal end of rows
+     */
+    public Map<String, Object> nextRow() {
+        if (done) {
+            done = false;
+            return null;
+        }
+        Map<String, Object> row = new HashMap<String, Object>();
+        DataSource<InputStream> dataSource = context.getDataSource();
+        // System.out.println("\n**** " + context.getResolvedEntityAttribute(URL));
+        InputStream is = dataSource.getData(context.getResolvedEntityAttribute(URL));
+        row.put("id", context.getResolvedEntityAttribute(URL));
+        // here we have to open the stream and extract the features. Then we put them into the row object.
+        // basically I hope that the entity processor is called for each entity anew, otherwise this approach won't work.
+        try {
+            BufferedImage img = ImageIO.read(is);
+            row.put("id", context.getResolvedEntityAttribute(URL));
+            for (int i = 0; i < listOfFeatures.length; i++) {
+                LireFeature feature = listOfFeatures[i];
+                feature.extract(img);
+                String histogramField = classToPrefix.get(feature.getClass()) + "_hi";
+                String hashesField = classToPrefix.get(feature.getClass()) + "_ha";
+                row.put(histogramField, Base64.encodeBase64String(feature.getByteArrayRepresentation()));
+                row.put(hashesField, ParallelSolrIndexer.arrayToString(BitSampling.generateHashes(feature.getDoubleHistogram())));
+            }
+        } catch (IOException e) {
+            System.err.println("Error loading image or extracting features.");
+            //wrapAndThrow(SEVERE, e, "Error loading image or extracting features.");
+        }
+        // if (count++>10)
+        done = true;
+        // dataSource.close();
+        return row;
+    }
 }

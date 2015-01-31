@@ -1,5 +1,8 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python
 
+import os
+import optparse
 import json
 
 __author__ = 'ferdous'

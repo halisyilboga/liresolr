@@ -1,8 +1,10 @@
 *.class
-
+testdata
+idx-*
 # Package Files #
 *.jar
 *.war
+*.dat
 *.ear
 data
 solrdocs
@@ -16,3 +18,6 @@ liresolr.iml
 /nbproject/private/
 /build/
 /logs/
+docs.xml
+out.*
+*.log

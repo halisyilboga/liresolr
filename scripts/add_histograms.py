@@ -1,5 +1,8 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python
 
+import os
+import optparse
 import json
 
 __author__ = 'ferdous'
@@ -15,7 +18,7 @@ HOSTNAME = 'localhost'
 SOLR_HOSTNAME = 'localhost'
 #SOLR_HOSTNAME = '54.235.24.244'
 
-def run(folder="/data/digitalcandy/ml/images/"):
+def run(folder):
     os.path.walk(folder, step, ('.xml', 'out2.txt'))
     for line in open('out2.txt'):
         save(line.rstrip())
@@ -55,5 +58,10 @@ def getPbsUrl(file_name="none"):
     return 'http://' + HOSTNAME + pathname2url(file_name)
 
 
-if __name__ == "__main__":
-    run()
+if __name__ == "__main__" :
+    parser = optparse.OptionParser()
+    parser.add_option("-d", "--directory", metavar="DIR", help="Directory to scan for image files")
+
+    opts, args = parser.parse_args()
+    print 'scanning directory: ', opts.directory
+    run(opts.directory)

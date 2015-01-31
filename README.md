@@ -1,27 +1,57 @@
 LIRE Solr Integration Project
 =============================
 
-Includes a RequestHandlers and some utility classes for a fast start.
+This is a Solr plugin for the LIRE content based image retrieval library, so basically it's for indexing images and then
+finding similar (looking) ones. The original library can be found at https://code.google.com/p/lire/
 
-The request handlers supports six different types of queries
+The LIRE Solr plugin includes a RequestHandler for searching, an EntityProcessor for indexing,
+a ValeSource Parser for content based re-ranking and a parallel indexing application.
+
+A demo can be found at http://demo-itec.uni-klu.ac.at/liredemo/
+
+If you need help on the plugin, please use the mailing list at http://groups.google.com/group/lire-dev to ask questions.
+If you need help with your project, please contact me, we also offer consulting services.
+
+If you use LIRE Solr for scientific purposes, please cite the following paper: 
+
+Lux, Mathias, and Glenn Macstravic. "The LIRE Request Handler: A Solr Plug-In for Large Scale Content Based Image Retrieval." MultiMedia Modeling. Springer International Publishing, 2014.
+
+The request handler supports four different types of queries
 
 1.  Get random images ...
 2.  Get images that are looking like the one with id ...
 3.  Get images looking like the one found at url ...
 4.  Get images with a feature vector like ...
-5.  Extract histogram from an image URL ...
-6.  Determine if the solr contains an identical image (differing by 2D transformations) ...
+5.  Extract histogram and hashes from an image URL ...
 
 Preliminaries
 -------------
 Supported values for feature field parameters, e.g. lireq?field=cl_ha:
 
+-  **ce_ha** .. CEDD
+-  **sc_ha** .. ScalableColor
 -  **cl_ha** .. ColorLayout
 -  **ph_ha** .. PHOG
--  **oh_ha** .. OpponentHistogram
--  **eh_ha** .. EdgeHistogram
+-  **eh_ha** .. Edges
+-  **oh_ha** .. Opponents
 -  **jc_ha** .. JCD
--  **su_ha** .. SURF
+-  **fc_ha** .. FCTH
+-  **fo_ha** .. FuzzyOpponentHistogram
+-  **jh_ha** .. JointHistogram
+-  **su_ha** .. Surf
+-  **ga_ha** .. Gabor
+-  **ta_ha** .. Tamura
+-  **ll_ha** .. LuminanceLayout
+-  **jp_ha** .. JpegCoefficientHistogram
+-  **si_ha** .. SimpleColor
+-  **lo_ha** .. LocalBinaryPatterns
+-  **ro_ha** .. RotationInvariantLocalBinaryPatterns
+-  **bi_ha** .. BinaryPatternsPyramid
+
+The field parameter (partially) works with the LIRE request handler:
+
+-  **fl** .. Fields, give them as a comma or space separated list, like "fl=title,id,score" or "fl=*,score". Note that "*" is denoting all fields and score adds the distance (which already comes with the "d" fields) in an additional score field.
+-  **fq** .. Filter query, give them as a comma separated list in the format "fq=tags:dog tags:funny". No wildcards and no spaces in terms supported for now.
 
 Getting random images
 ---------------------
@@ -40,6 +70,8 @@ Parameters:
 -   **id** .. the ID of the image used as a query as stored in the "id" field in the index.
 -   **field** .. gives the feature field to search for (optional, default=cl_ha, values see above)
 -   **rows** .. indicates how many results should be returned (optional, default=60).
+-   **accuracy** .. double in [0.05, 1] indicates how many accurate the results should be (optional, default=0.33, less is less accurate, but faster).
+-   **candidates** .. int in [100, 100000] indicates how many accurate the results should be (optional, default=10000, less is less accurate, but faster).
 
 Search by URL
 -------------
@@ -50,6 +82,8 @@ Parameters:
 -   **url** .. the URL of the image used as a query. Note that the image has to be accessible by the web server Java has to be able to read it.
 -   **field** .. gives the feature field to search for (optional, default=cl_ha, values see above)
 -   **rows** .. indicates how many results should be returned (optional, default=60).
+-   **accuracy** .. double in [0.05, 1] indicates how many accurate the results should be (optional, default=0.33, less is less accurate, but faster).
+-   **candidates** .. int in [100, 100000] indicates how many accurate the results should be (optional, default=10000, less is less accurate, but faster).
 
 Search by feature vector
 ------------------------
@@ -58,54 +92,28 @@ extracts the features from the image, which makes sense if the image should not 
 
 Parameters:
 
--  **hashes** .. Hashes of the image feature as returned by BitSampling#generateHashes(double[]) as a String of white space separated numbers.
--  **feature** .. Base64 encoded feature histogram from LireFeature#getByteArrayRepresentation().
--  **field** .. gives the feature field to search for (optional, default=cl_ha, values see above)
--  **rows** .. indicates how many results should be returned (optional, default=60).
+-   **hashes** .. Hashes of the image feature as returned by BitSampling#generateHashes(double[]) as a String of white space separated numbers.
+-   **feature** .. Base64 encoded feature histogram from LireFeature#getByteArrayRepresentation().
+-   **field** .. gives the feature field to search for (optional, default=cl_ha, values see above)
+-   **rows** .. indicates how many results should be returned (optional, default=60).
+-   **accuracy** .. double in [0.05, 1] indicates how many accurate the results should be (optional, default=0.33, less is less accurate, but faster).
+-   **candidates** .. int in [100, 100000] indicates how many accurate the results should be (optional, default=10000, less is less accurate, but faster).
 
 Extracting histograms
 ---------------------
-Extracts the histogram of an image for use with the lire sorting function.
+Extracts the histogram and the hashes of an image for use with the lire sorting function.
 
 Parameters:
 
 -   **extract** .. the URL of the image. Note that the image has to be accessible by the web server Java has to be able to read it.
 -   **field** .. gives the feature field to search for (optional, default=cl_ha, values see above)
 
-Try to find identical image
----------------------------
-Combines more methods to find out identical image. If there is no identical image, handler return in the response **"identity":false**.
-
-USAGE:
-[solrurl]/[core]/lireId?url=<URL>
-
-Parameters:
-
--   **url** .. the URL of the image. Note that the image has to be accessible by the web server Java has to be able to read it.
-
-Find similar images
--------------------
-Combines Color layout and SURF methods to find similar images. You can parametrize searching in **config.properties** file.
-
-USAGE:
-[solrurl]/[core]/lireSim?url=<URL>
-
-Parameters
-
--  **url** .. the URL of the image. Note that the image has to be accessible by the web server Java has to be able to read it.
-
 
 Installation
 ============
 
-First run the dist task to create a jar. This should be integrated in the Solr class-path.
-You can specify the Solr class-path in the solrconfig.xml. You also must add dependency libraries
-to the class-path. **lire-request-handler.jar** search them in the lib directory.
-
-     <lib dir="../../handlers" regex="lire-request-handler.jar" />
-     <lib dir="../../handlers/lib" regex=".*\.jar" />
-
-Then add the new request handlers has to be registered in the solrconfig.xml file:
+First run the dist task to create a single jar. This should be integrated in the Solr class-path. Then add
+the new request handler has to be registered in the solrconfig.xml file:
 
      <requestHandler name="/lireq" class="net.semanticmetadata.lire.solr.LireRequestHandler">
         <lst name="defaults">
@@ -114,89 +122,87 @@ Then add the new request handlers has to be registered in the solrconfig.xml fil
           <str name="indent">true</str>
         </lst>
      </requestHandler>
-     
-     <requestHandler name="/lireId" class="net.semanticmetadata.lire.solr.requesthandler.IdentityRequestHandler">
-        <lst name="defaults">
-          <str name="echoParams">explicit</str>
-          <str name="wt">json</str>
-          <str name="indent">true</str>
-        </lst>
-     </requestHandler>
 
-     <requestHandler name="/lireSim" class="net.semanticmetadata.lire.solr.requesthandler.SimilarRequestHandler">
-        <lst name="defaults">
-          <str name="echoParams">explicit</str>
-          <str name="wt">json</str>
-          <str name="indent">true</str>
-        </lst>
-     </requestHandler>
-
-Use of the request handlers is detailed above.
+Use of the request handler is detailed above.
 
 You'll also need the respective fields in the schema.xml file:
 
     <fields>
-       <!-- file path for ID -->
-       <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" />
-       <!-- the solr file name -->
-       <field name="title" type="text_general" indexed="true" stored="true" multiValued="true"/>
-       <!-- Edge Histogram -->
-       <field name="eh_ha" type="text_ws" indexed="true" stored="false" required="false"/>
-       <field name="eh_hi" type="binaryDV"  indexed="false" stored="true" required="false"/>
-       <!-- ColorLayout -->
-       <field name="cl_ha" type="text_ws" indexed="true" stored="false" required="false"/>
-       <field name="cl_hi" type="binaryDV"  indexed="false" stored="true" required="false"/>
-       <!-- PHOG -->
-       <field name="ph_ha" type="text_ws" indexed="true" stored="false" required="false"/>
-       <field name="ph_hi" type="binaryDV"  indexed="false" stored="true" required="false"/>
-       <!-- JCD -->
-       <field name="jc_ha" type="text_ws" indexed="true" stored="false" required="false"/>
-       <field name="jc_hi" type="binaryDV"  indexed="false" stored="true" required="false"/>
-       <!-- OpponentHistogram -->
-       <!--field name="oh_ha" type="text_ws" indexed="true" stored="false" required="false"/-->
-       <!--field name="oh_hi" type="binary"  indexed="false" stored="true" required="false"/-->
-       <!-- SURF -->
-       <field name="su_ha" type="text_ws" indexed="true" stored="false" required="false"/>
-       <field name="su_hi" type="binary"  indexed="false" stored="true" required="false" multiValued="true"/>
-       <!-- Needed for SOLR -->
-       <field name="_version_" type="long" indexed="true" stored="true"/>
+		<!-- file path for ID -->
+		<field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" />
+		<!-- the sole file name -->
+		<field name="title" type="text_general" indexed="true" stored="true" multiValued="true"/>
+		<!-- Needed for SOLR -->
+		<field name="_version_" type="long" indexed="true" stored="true"/>
+	   	<!-- Edge Histogram -->
+		<field indexed="true" name="eh_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="eh_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- ColorLayout -->
+		<field indexed="true" name="cl_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="cl_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- PHOG -->
+		<field indexed="true" name="ph_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="ph_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- JCD -->
+		<field indexed="true" name="jc_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="jc_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- OpponentHistogram -->
+		<field indexed="true" name="oh_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="oh_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- CEDD -->
+		<field indexed="true" name="ce_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="ce_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- ScalableColor -->
+		<field indexed="true" name="sc_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="sc_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- SURF -->
+		<field indexed="true" name="su_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="su_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- FCTH -->
+		<field indexed="true" name="fc_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="fc_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- FuzzyOpponentHistogram -->
+		<field indexed="true" name="fo_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="fo_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- JointHistogram -->
+		<field indexed="true" name="jh_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="jh_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- SimpleColor -->    
+		<field indexed="true" name="si_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="si_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- LocalBinaryPatterns -->
+		<field indexed="true" name="lo_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="lo_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- LuminanceLayout -->
+		<field indexed="true" name="ll_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="ll_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- JpegCoefficientHistogram -->
+		<field indexed="true" name="jp_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="jp_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- Gabor -->
+		<field indexed="true" name="ga_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="ga_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- Tamura -->
+		<field indexed="true" name="ta_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="ta_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- RotationInvariantLocalBinaryPatterns -->
+		<field indexed="true" name="ro_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="ro_hi" required="false" stored="true" type="binaryDV"/>
+		<!-- BinaryPatternsPyramid -->
+		<field indexed="true" name="bi_ha" required="false" stored="false" type="text_ws"/>
+		<field indexed="false" name="bi_hi" required="false" stored="true" type="binaryDV"/>
+
+		<field indexed="true" name="width" stored="true" type="int"/>
+		<field indexed="true" name="height" stored="true" type="int"/>
+		<field indexed="true" multiValued="false" name="timestamp" required="false" stored="true" type="tdate" default="NOW"/>
     </fields>
 
 Do not forget to add the custom field at the very same file:
 
     <fieldtype name="binaryDV" class="net.semanticmetadata.lire.solr.BinaryDocValuesField"/>
-   
-On the end you'll have to add configuration file liresolr.properties to the config directory of
-your solr core (to the same directory where is solrconfig.xml).
 
-```properties
-# It defines how many images will be obtained from solr and then they will be compared
-# with the queried image.
-# Visual Words
-numVisualWordsImages = 30
-# Color Layout
-numColorLayoutImages = 2000
-# It defines how many images will be obtained from solr at similar searching (/lireSim)
-numColorLayoutSimImages = 10
-numSurfSimImages = 30
-# Count of images returned by /lireSim handler:
-numSimilarImages = 30
-# It defines if system should resize queried image. Parameter defines shorter side of the image.
-# You can use value 0 for no resize.
-resizeQueryImage = 400
-# It defines treshold of Color Layout method. Images, which have the distance less than the
-# threshold, will be marked as potentional identical images to the queried image.
-thresholdCLIdentity1 = 7.0
-# It defines the second level of threshold. If it exists exactly one image, which has
-# distance less than first threshold and it has also distance less than the second
-# threshold, system says, that this image is identical to the queried image.
-thresholdCLIdentity2 = 5.0
-# It defines threshold of the SURF method. Images which have distance greater or equals
-# to this value will be removed from a list of candidates to the identical image.
-thresholdSUIdentity = 0.9
-```
 There is also a sort function based on LIRE. The function parser needs to be added to the
-solrconfig.xml file like this:
+solarconfig.xml file like this:
 
       <valueSourceParser name="lirefunc"
         class="net.semanticmetadata.lire.solr.LireValueSourceParser" />
@@ -205,11 +211,28 @@ Then the function lirefunc(arg1,arg2) is available for function queries. Two arg
 
 -  Feature to be used for computing the distance between result and reference image. Possible values are {cl, ph, eh, jc}
 -  Actual Base64 encoded feature vector of the reference image. It can be obtained by calling LireFeature.getByteRepresentation() and by Base64 encoding the resulting byte[] data.
+-  Optional maximum distance for those data items that cannot be processed, ie. don't feature the respective field.
+
+Note that if you send the parameters using an URL you might take extra care of the URL encoding, ie. white space, the "=" sign, etc.
 
 Examples:
 
--  [solrurl]/select?q=*:*&fl=id,lirefunc(cl,"FQY5DhMYDg...AQEBA%3D") – adding the distance to the reference image to the results
--  [solrurl]/select?q=*:*&sort=lirefunc(cl,"FQY5DhMYDg...AQEBA%3D")+asc – sorting the results based on the distance to the reference image
+-  [solrurl]/select?q=*:*&fl=id,lirefunc(cl,"FQY5DhMYDg...AQEBA=** .. – adding the distance to the reference image to the results
+-  [solrurl]/select?q=*:*&sort=lirefunc(cl,"FQY5DhMYDg...AQEBA=** ..+asc – sorting the results based on the distance to the reference image
+
+If you extract the features yourself, use code like his one:
+
+    // ColorLayout
+    ColorLayout cl = new ColorLayout();
+    cl.extract(ImageIO.read(new File("...** ..));
+    String arg1 = "cl";
+    String arg2 = Base64.encode(cl.getByteArrayRepresentation());
+
+    // PHOG
+    PHOG ph = new PHOG();
+    ph.extract(ImageIO.read(new File("...** ..));
+    String arg1 = "ph";
+    String arg2 = Base64.encode(ph.getByteArrayRepresentation());
 
 
 
@@ -219,20 +242,80 @@ Indexing
 Check ParallelSolrIndexer.java for indexing. It creates XML documents (either one per image or one single large file)
 to be sent to the Solr Server.
 
-To index images by the SURF method check a link http://www.semanticmetadata.net/wiki/doku.php?id=lire:bovw
+ParallelSolrIndexer
+===================
+This help text is shown if you start the ParallelSolrIndexer with the '-h' option.
 
-You can also use a [LireSolrIndexer](https://github.com/dynamicguy/liresolr) This is preferred method if you want to use **/lireId** or **/lireSim** requests.
+    $> ParallelSolrIndexer -i <infile> [-o <outfile>] [-n <threads>] [-f] [-p] [-m <max_side_length>] [-r <full class name>] \\
+             [-y <list of feature classes>]
 
-Simple Web Application
-======================
+Note: if you don't specify an outfile just ".xml" is appended to the input image for output. So there will be one XML
+file per image. Specifying an outfile will collect the information of all images in one single file.
 
-Compilation
------------
+-n ... number of threads should be something your computer can cope with. default is 4.
+-f ... forces overwrite of outfile
+-p ... enables image processing before indexing (despeckle, trim white space)
+-m ... maximum side length of images when indexed. All bigger files are scaled down. default is 512.
+-r ... defines a class implementing net.semanticmetadata.lire.solr.indexing.ImageDataProcessor
+       that provides additional fields.
+-y ... defines which feature classes are to be extracted. default is "-y ph,cl,eh,jc". "-y ce,ac" would
+       add to the other four features.
 
-Simple run:
+INFILE
+------
+The infile gives one image per line with the full path. You can create an infile easily on Windows with running in the
+parent directory of the images
 
-```shell
-ant web
-```
+    $> dir /s /b *.jpg > infile.txt
 
-This command creates a war file. You could find it in the dist directory. After it you can integrate this war package to the Jetty. If you would change some behaviour or properties of this application you just see and change the source code.
+On linux just use find, grep and whatever you find appropriate. With find it'd look like this assuming that you run it
+from the root directory:
+
+    $> find /[path-to-image-base-dir]/ -name *.jpg
+
+OUTFILE
+-------
+The outfile has to be send to the Solr server. Assuming the Solr server is local you may use
+
+    curl.exe http://localhost:8983/solr/lire/update -H "Content-Type: text/xml" --data-binary "<delete><query>*:*</query></delete>"
+    curl.exe http://localhost:8983/solr/lire/update -H "Content-Type: text/xml" --data-binary @outfile.xml
+    curl.exe http://localhost:8983/solr/lire/update -H "Content-Type: text/xml" --data-binary "<commit/>"
+
+You need to commit you changes! If your outfile exceeds 500MB, curl
+might complain. Then use split to cut it into pieces and repair the
+root tags (<add> and </add>)
+
+LireEntityProcessor
+===================
+
+Another way is to use the LireEntityProcessor. Then you have to reference the solr-data-config.xml file in the
+solrconfig.xml, and then give the configuration for the EntityProcessor like this:
+
+    <dataConfig>
+        <dataSource name ="bin" type="BinFileDataSource" />
+        <document>
+            <entity name="f"
+                    processor="FileListEntityProcessor"
+                    transformer="TemplateTransformer"
+                    baseDir="D:\Java\Projects\Lire\testdata\wang-1000\"
+                    fileName=".*jpg"
+                    recursive="true"
+                    rootEntity="false" dataSource="null" onError="skip">
+                <entity name="lire-test" processor="net.semanticmetadata.lire.solr.LireEntityProcessor" url="${f.fileAbsolutePath}" dataSource="bin"  onError="skip">
+                    <field column="id"/>
+                    <field column="cl_ha"/>
+                    <field column="cl_hi"/>
+                    <field column="ph_ha"/>
+                    <field column="ph_hi"/>
+                    <field column="oh_ha"/>
+                    <field column="oh_hi"/>
+                    <field column="jc_ha"/>
+                    <field column="jc_hi"/>
+                    <field column="eh_ha"/>
+                    <field column="eh_hi"/>
+                </entity>
+            </entity>
+        </document>
+    </dataConfig>
+
+*Mathias Lux, 2015-01-14*
