@@ -92,6 +92,7 @@ import net.semanticmetadata.lire.imageanalysis.bovw.SurfFeatureHistogramBuilder;
 import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
 import net.semanticmetadata.lire.imageanalysis.spatialpyramid.SPCEDD;
 import net.semanticmetadata.lire.imageanalysis.mser.MSERFeature;
+import net.semanticmetadata.lire.imageanalysis.sift.Feature;
 import net.semanticmetadata.lire.impl.ChainedDocumentBuilder;
 import net.semanticmetadata.lire.impl.SiftDocumentBuilder;
 import net.semanticmetadata.lire.impl.SimpleBuilder;
@@ -116,7 +117,7 @@ public class ParallelFullSolrIndexer implements Runnable {
 
     private Logger log = Logger.getLogger(this.getClass().getName());
     private int numberOfThreads = 10;
-    private String indexPath;
+    private String indexPath = "/data/digitalcandy/ml/clusters";
     private String imageDirectory;
     IndexWriter writer;
     File imageList = null;
@@ -199,7 +200,9 @@ public class ParallelFullSolrIndexer implements Runnable {
         try {
             IndexReader ir = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
             BOVWBuilder sfh = new BOVWBuilder(ir, new SurfFeature(), 1000, 50);
-            sfh.index();
+            sfh.indexMissing();
+            BOVWBuilder sifh = new BOVWBuilder(ir, new Feature(), 1000, 50);
+            sifh.indexMissing();
         } catch (IOException ioe) {
             //System.err.println(ioe.getMessage());
         }
@@ -279,19 +282,10 @@ public class ParallelFullSolrIndexer implements Runnable {
      */
     public void addBuilders(ChainedDocumentBuilder builder) {
         builder.addBuilder(DocumentBuilderFactory.getCEDDDocumentBuilder());
-        builder.addBuilder(DocumentBuilderFactory.getFCTHDocumentBuilder());
-        builder.addBuilder(DocumentBuilderFactory.getJCDDocumentBuilder());
-        builder.addBuilder(DocumentBuilderFactory.getPHOGDocumentBuilder());
-        builder.addBuilder(DocumentBuilderFactory.getOpponentHistogramDocumentBuilder());
-        builder.addBuilder(DocumentBuilderFactory.getJointHistogramDocumentBuilder());
-        builder.addBuilder(DocumentBuilderFactory.getAutoColorCorrelogramDocumentBuilder());
-        builder.addBuilder(DocumentBuilderFactory.getColorLayoutBuilder());
-        builder.addBuilder(DocumentBuilderFactory.getEdgeHistogramBuilder());
-        builder.addBuilder(DocumentBuilderFactory.getScalableColorBuilder());
-        builder.addBuilder(DocumentBuilderFactory.getLuminanceLayoutDocumentBuilder());
-        builder.addBuilder(DocumentBuilderFactory.getColorHistogramDocumentBuilder());
+        builder.addBuilder(DocumentBuilderFactory.getSurfDocumentBuilder());
+        builder.addBuilder(DocumentBuilderFactory.getSiftDocumentBuilder());
 
-        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderRandomDocumentBuilder());
+//        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderRandomDocumentBuilder());
 //        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderCVSIFTDocumentBuilder());
 //        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderCVSURFDocumentBuilder());
 //        builder.addBuilder(DocumentBuilderFactory.getSimpleBuilderGaussRandomDocumentBuilder());
@@ -420,7 +414,7 @@ public class ParallelFullSolrIndexer implements Runnable {
                 try {
                     queue.put(new WorkItem(s, b));
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    //e.printStackTrace();
                 }
             }
             ended = true;
@@ -455,7 +449,6 @@ public class ParallelFullSolrIndexer implements Runnable {
                     }
                 } catch (InterruptedException e) {
                     // e.printStackTrace();
-                    log.severe(e.getMessage());
                 }
                 try {
                     if (!locallyEnded && tmp != null) {
@@ -467,37 +460,7 @@ public class ParallelFullSolrIndexer implements Runnable {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-//                synchronized (images) {
-//                    // we wait for the stack to be either filled or empty & not being filled any more.
-//                    while (images.empty() && !ended) {
-//                        try {
-//                            images.wait(10);
-//                        } catch (InterruptedException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//                    // make sure the thread locally knows that the end has come (outer loop)
-//                    if (images.empty() && ended)
-//                        locallyEnded = true;
-//                    // well the last thing we want is an exception in the very last round.
-//                    if (!images.empty() && !locallyEnded) {
-//                        count++;
-//                        overallCount++;
-//                    }
-//                }
-//                try {
-//                    if (!locallyEnded) {
-//                        ByteArrayInputStream b = new ByteArrayInputStream(tmp.getBuffer());
-//                        BufferedImage img = ImageIO.read(b);
-//                        Document d = builder.createDocument(img, tmp.getFileName());
-//                        writer.addDocument(d);
-//                    }
-//                } catch (Exception e) {
-//                    System.err.println("[ParallelIndexer] Could not handle file " + tmp.getFileName() + ": "  + e.getMessage());
-//                    e.printStackTrace();
-//                }
             }
-//            System.out.println("Images analyzed: " + count);
         }
     }
 }

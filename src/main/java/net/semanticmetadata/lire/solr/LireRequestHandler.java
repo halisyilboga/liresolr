@@ -18,9 +18,19 @@ import org.apache.solr.search.SolrIndexSearcher;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import net.semanticmetadata.lire.DocumentBuilder;
+import net.semanticmetadata.lire.ImageSearchHits;
+import net.semanticmetadata.lire.ImageSearcher;
+import net.semanticmetadata.lire.ImageSearcherFactory;
+import net.semanticmetadata.lire.filter.LsaFilter;
+import net.semanticmetadata.lire.filter.RerankFilter;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 
@@ -48,6 +58,9 @@ import net.semanticmetadata.lire.imageanalysis.GenericByteLireFeature;
 import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
 import net.semanticmetadata.lire.imageanalysis.spatialpyramid.SPCEDD;
 import net.semanticmetadata.lire.imageanalysis.mser.MSERFeature;
+import net.semanticmetadata.lire.impl.VisualWordsImageSearcher;
+import net.semanticmetadata.lire.utils.FileUtils;
+import org.apache.lucene.store.FSDirectory;
 
 /**
  * This is the main LIRE RequestHandler for the Solr Plugin. It supports query
@@ -61,12 +74,13 @@ public class LireRequestHandler extends RequestHandlerBase {
     //    private static HashMap<String, Class> fieldToClass = new HashMap<String, Class>(5);
     volatile long numErrors;
     volatile long time = 0;
-    volatile long totalTime;
+    volatile long totalTime = 0;
     volatile int countRequests = 0;
     volatile int defaultNumberOfResults = 60;
     volatile int paramStarts = 0;
     volatile int paramRows = defaultNumberOfResults;
     static final String defaultAlgorithmField = "cl_ha";
+    static String bovw_index_path = "/data/digitalcandy/ml/clusters";
     /**
      * number of candidate results retrieved from the index. The higher this
      * number, the slower, the but more accurate the retrieval will be. 10k is a
@@ -92,7 +106,6 @@ public class LireRequestHandler extends RequestHandlerBase {
             e.printStackTrace();
         }
     }
-    
 
     @Override
     public void init(NamedList args) {
@@ -123,10 +136,10 @@ public class LireRequestHandler extends RequestHandlerBase {
     public void handleRequestBody(SolrQueryRequest req, SolrQueryResponse rsp) throws Exception {
         SolrParams params = req.getParams();
         if (params.getInt("rows") != null) {
-            paramRows = params.getInt("rows");
+            this.paramRows = params.getInt("rows");
         }
         if (req.getParams().getInt("start") != null) {
-            paramStarts = params.getInt("start");
+            this.paramStarts = params.getInt("start");
         }
 
         countRequests++;
@@ -139,6 +152,10 @@ public class LireRequestHandler extends RequestHandlerBase {
                 handleUrlSearch(req, rsp);
             } else if (req.getParams().get("id") != null) { // we are searching for an image based on an URL
                 handleIdSearch(req, rsp);
+            } else if (req.getParams().get("surf") != null) { // SURF
+                handleSurfSearch(req, rsp);
+            } else if (req.getParams().get("sift") != null) { // SIFT
+                handleSiftSearch(req, rsp);
             } else if (req.getParams().get("extract") != null) { // we are trying to extract from an image URL.
                 handleExtract(req, rsp);
             } else { // lets return random results.
@@ -247,7 +264,7 @@ public class LireRequestHandler extends RequestHandlerBase {
         String paramField = "cl_ha";
         if (req.getParams().get("field") != null) {
             paramField = req.getParams().get("field");
-        }        
+        }
 
         numberOfQueryTerms = req.getParams().getDouble("accuracy", DEFAULT_NUMBER_OF_QUERY_TERMS);
         numberOfCandidateResults = req.getParams().getInt("candidates", DEFAULT_NUMBER_OF_CANDIDATES);
@@ -342,7 +359,7 @@ public class LireRequestHandler extends RequestHandlerBase {
         if (req.getParams().get("field") != null) {
             paramField = req.getParams().get("field");
         }
-        
+
         numberOfQueryTerms = req.getParams().getDouble("accuracy", DEFAULT_NUMBER_OF_QUERY_TERMS);
         numberOfCandidateResults = req.getParams().getInt("candidates", DEFAULT_NUMBER_OF_CANDIDATES);
         // create boolean query:
@@ -386,6 +403,7 @@ public class LireRequestHandler extends RequestHandlerBase {
      * @throws InstantiationException
      */
     private void doSearch(SolrQueryRequest req, SolrQueryResponse rsp, SolrIndexSearcher searcher, String hashFieldName, int maximumHits, List<Term> terms, Query query, LireFeature queryFeature) throws IOException, IllegalAccessException, InstantiationException {
+
         // temp feature instance
         LireFeature tmpFeature = queryFeature.getClass().newInstance();
         // Taking the time of search for statistical purposes.
@@ -573,5 +591,108 @@ public class LireRequestHandler extends RequestHandlerBase {
         }
         return termFilter;
     }
-}
 
+    private static ImageSearcher getSearcher(int selectedIndex, int limit) {
+        int numResults = 50;
+        try {
+            numResults = limit;
+        } catch (Exception e) {
+            // nothing to do ...
+        }
+        ImageSearcher searcher = ImageSearcherFactory.createColorLayoutImageSearcher(numResults);
+
+        if (selectedIndex == 1) { // ScalableColor
+            searcher = ImageSearcherFactory.createScalableColorImageSearcher(numResults);
+        } else if (selectedIndex == 2) { // EdgeHistogram
+            searcher = ImageSearcherFactory.createEdgeHistogramImageSearcher(numResults);
+        } else if (selectedIndex == 3) { // AutoColorCorrelogram
+            searcher = ImageSearcherFactory.createAutoColorCorrelogramImageSearcher(numResults);
+        } else if (selectedIndex == 4) { // CEDD
+            searcher = ImageSearcherFactory.createCEDDImageSearcher(numResults);
+        } else if (selectedIndex == 5) { // FCTH
+            searcher = ImageSearcherFactory.createFCTHImageSearcher(numResults);
+        } else if (selectedIndex == 6) { // JCD
+            searcher = ImageSearcherFactory.createJCDImageSearcher(numResults);
+        } else if (selectedIndex == 7) { // SimpleColorHistogram
+            searcher = ImageSearcherFactory.createColorHistogramImageSearcher(numResults);
+        } else if (selectedIndex == 8) { // Tamura
+            searcher = ImageSearcherFactory.createTamuraImageSearcher(numResults);
+        } else if (selectedIndex == 9) { // Gabor
+            searcher = ImageSearcherFactory.createGaborImageSearcher(numResults);
+        } else if (selectedIndex == 10) { // JpegCoefficientHistogram
+            searcher = ImageSearcherFactory.createJpegCoefficientHistogramImageSearcher(numResults);
+        } else if (selectedIndex == 11) { // SURF
+            searcher = new VisualWordsImageSearcher(numResults, DocumentBuilder.FIELD_NAME_SURF + DocumentBuilder.FIELD_NAME_BOVW);
+        } else if (selectedIndex == 12) { // JointHistogram
+            searcher = ImageSearcherFactory.createJointHistogramImageSearcher(numResults);
+        } else if (selectedIndex == 13) { // OpponentHistogram
+            searcher = ImageSearcherFactory.createOpponentHistogramSearcher(numResults);
+        } else if (selectedIndex == 14) { // LuminanceLayout
+            searcher = ImageSearcherFactory.createLuminanceLayoutImageSearcher(numResults);
+        } else if (selectedIndex >= 15) { // PHOG
+            searcher = ImageSearcherFactory.createPHOGImageSearcher(numResults);
+        }
+        return searcher;
+    }
+
+    private static ImageSearchHits searchForImageWithSurf(String id, int rows) throws FileNotFoundException, IOException {
+        Document document = null;
+        try (IndexReader reader = IndexReader.open(FSDirectory.open(new File(bovw_index_path)))) {
+            for (int i = 0; i < reader.numDocs(); i++) {
+                Document idoc = reader.document(i);
+                String fileName = idoc.getValues(DocumentBuilder.FIELD_NAME_IDENTIFIER)[0];
+                if (id == null ? fileName == null : id.equals(fileName)) {
+                    document = idoc;
+                }
+            }
+            ImageSearcher searcher = getSearcher(11, rows);
+            return searcher.search(document, reader);
+        }
+
+    }
+
+    private static ImageSearchHits lsa(ImageSearchHits hits, Document document) {
+        LsaFilter filter = new LsaFilter(CEDD.class, DocumentBuilder.FIELD_NAME_CEDD);
+        hits = filter.filter(hits, document);
+        return hits;
+    }
+
+    private static ImageSearchHits rerank(ImageSearchHits hits, Document document) {
+        RerankFilter filter = new RerankFilter(ColorLayout.class, DocumentBuilder.FIELD_NAME_COLORLAYOUT);
+        hits = filter.filter(hits, document);
+        return hits;
+    }
+
+    private void handleSurfSearch(SolrQueryRequest req, SolrQueryResponse rsp) {
+        long currentTime = System.currentTimeMillis();
+        try {
+            ImageSearchHits hits = searchForImageWithSurf(req.getParams().get("surf"), this.paramRows);
+            long elapsedTime = System.currentTimeMillis() - currentTime;
+            rsp.add("RawDocsCount", hits.length());
+            rsp.add("RawDocsSearchTime", elapsedTime);
+            // re-rank
+
+            SolrDocumentList results = new SolrDocumentList();
+            results.clear();
+            results.setNumFound(hits.length());
+            results.setStart(paramStarts);
+            for (int j = 0; j < hits.length(); j++) {
+                String fileName = hits.doc(j).getValues(
+                        DocumentBuilder.FIELD_NAME_IDENTIFIER)[0];
+                SolrDocument solrDocument = new SolrDocument();
+                solrDocument.setField("id", fileName);
+                solrDocument.setField("title", fileName);
+                solrDocument.setField("d", hits.score(j));
+                results.add(solrDocument);
+            }
+            rsp.add("response", results);
+
+        } catch (IOException ex) {
+            numErrors++;
+        }
+    }
+
+    private void handleSiftSearch(SolrQueryRequest req, SolrQueryResponse rsp) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+}

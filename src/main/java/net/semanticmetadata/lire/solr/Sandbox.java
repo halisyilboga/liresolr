@@ -65,9 +65,9 @@ public class Sandbox {
     private static final Logger LOG = Logger.getLogger(Sandbox.class.getName());
     private static File indexPath;
     private static final String queryImage = "/Users/ferdous/projects/digitalcandy/liresolr/testdata/ferrari/red/6822615599_18d9915317_b.jpg";
-    static String bovw_index_path = "index";
     int sampleToCreateCodebook = -1;
     int numberOfClusters = 10;
+    static String bovw_index_path = "/data/digitalcandy/ml/clusters";
 
     public void createSurfIndex() throws IOException {
         ParallelIndexer pin = new ParallelIndexer(8, bovw_index_path, "./testdata") {
@@ -157,41 +157,58 @@ public class Sandbox {
     }
 
     private static void searchForImage(String imagePath) throws FileNotFoundException, IOException {
-        System.out.println("---< searching >-------------------------");
         Document document = null;
         try (IndexReader reader = IndexReader.open(FSDirectory.open(indexPath))) {
             for (int i = 0; i < reader.numDocs(); i++) {
                 Document idoc = reader.document(i);
                 String fileName = idoc.getValues(DocumentBuilder.FIELD_NAME_IDENTIFIER)[0];
-                if(imagePath == null ? fileName == null : imagePath.equals(fileName)){
+                if (imagePath == null ? fileName == null : imagePath.equals(fileName)) {
                     document = idoc;
                 }
                 System.out.println(i + ": \t" + fileName);
-            }              
+            }
             String path = document.getValues(DocumentBuilder.FIELD_NAME_IDENTIFIER)[0];
             System.out.println("searching for " + path);
             searchForDocument(document);
         }
-        
+
+    }
+
+    private static ImageSearchHits searchForImageWithSurf(String id, int rows) throws FileNotFoundException, IOException {
+        Document document = null;
+        try (IndexReader reader = IndexReader.open(FSDirectory.open(new File(bovw_index_path)))) {
+            for (int i = 0; i < reader.numDocs(); i++) {
+                Document idoc = reader.document(i);
+                String fileName = idoc.getValues(DocumentBuilder.FIELD_NAME_IDENTIFIER)[0];
+                if (id == null ? fileName == null : id.equals(fileName)) {
+                    document = idoc;
+                }
+            }
+            ImageSearcher searcher = getSearcher(11, rows);
+            return searcher.search(document, reader);
+        }
+
     }
 
     private static ImageSearchHits lsa(ImageSearchHits hits, Document document) {
-        System.out.println("---< LSA filtering >-------------------------");
         LsaFilter filter = new LsaFilter(CEDD.class, DocumentBuilder.FIELD_NAME_CEDD);
         hits = filter.filter(hits, document);
         return hits;
     }
 
     private static ImageSearchHits rerank(ImageSearchHits hits, Document document) {
-        // rerank
-        System.out.println("---< filtering >-------------------------");
         RerankFilter filter = new RerankFilter(ColorLayout.class, DocumentBuilder.FIELD_NAME_COLORLAYOUT);
         hits = filter.filter(hits, document);
         return hits;
     }
 
     public void findByUrl() throws IOException {
-        searchForImage("/Users/ferdous/projects/digitalcandy/liresolr/testdata/cars/trucks/pickup-red.jpg");
+        ImageSearchHits hits = searchForImageWithSurf("/Users/ferdous/projects/digitalcandy/liresolr/testdata/flickrphotos/15665511054_b53aba129a_b.jpg", 50);
+        for (int j = 0; j < hits.length(); j++) {
+            String fileName = hits.doc(j).getValues(
+                    DocumentBuilder.FIELD_NAME_IDENTIFIER)[0];
+            System.out.println(hits.score(j) + ": \t" + fileName);
+        }
     }
 
     public Sandbox() {

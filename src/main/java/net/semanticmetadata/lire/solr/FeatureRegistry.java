@@ -41,15 +41,15 @@ public class FeatureRegistry {
      * Naming conventions for code: 2 letters for global features. More for
      * local ones.
      */
-    private static HashMap<String, Class<? extends LireFeature>> codeToClass = new HashMap<String, Class<? extends LireFeature>>(22);
+    private static HashMap<String, Class<? extends LireFeature>> codeToClass = new HashMap<String, Class<? extends LireFeature>>(24);
     /**
      * Caching the entries for fast retrieval or Strings without generating new
      * objects.
      */
-    private static HashMap<String, Class<? extends LireFeature>> hashFieldToClass = new HashMap<String, Class<? extends LireFeature>>(22);
-    private static HashMap<String, Class<? extends LireFeature>> featureFieldToClass = new HashMap<String, Class<? extends LireFeature>>(22);
-    private static HashMap<String, String> hashFieldToFeatureField = new HashMap<String, String>(22);
-    private static HashMap<Class<? extends LireFeature>, String> classToCode = new HashMap<Class<? extends LireFeature>, String>(22);
+    private static HashMap<String, Class<? extends LireFeature>> hashFieldToClass = new HashMap<String, Class<? extends LireFeature>>(24);
+    private static HashMap<String, Class<? extends LireFeature>> featureFieldToClass = new HashMap<String, Class<? extends LireFeature>>(24);
+    private static HashMap<String, String> hashFieldToFeatureField = new HashMap<String, String>(24);
+    private static HashMap<Class<? extends LireFeature>, String> classToCode = new HashMap<Class<? extends LireFeature>, String>(24);
 
     // Constants.
     private static final String featureFieldPostfix = "_hi";   // contains the histogram
@@ -88,6 +88,9 @@ public class FeatureRegistry {
         codeToClass.put("lo", LocalBinaryPatterns.class);
         codeToClass.put("ro", RotationInvariantLocalBinaryPatterns.class);
         codeToClass.put("bi", BinaryPatternsPyramid.class);
+        
+        codeToClass.put("sur_ce", GenericByteLireFeature.class);
+        codeToClass.put("sif_ce", GenericByteLireFeature.class);
 
         // -----< caches to be filled >----------------
         for (Iterator<String> iterator = codeToClass.keySet().iterator(); iterator.hasNext();) {
