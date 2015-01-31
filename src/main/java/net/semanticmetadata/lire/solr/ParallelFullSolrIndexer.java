@@ -93,10 +93,13 @@ import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
 import net.semanticmetadata.lire.imageanalysis.spatialpyramid.SPCEDD;
 import net.semanticmetadata.lire.imageanalysis.mser.MSERFeature;
 import net.semanticmetadata.lire.impl.ChainedDocumentBuilder;
+import net.semanticmetadata.lire.impl.SiftDocumentBuilder;
 import net.semanticmetadata.lire.impl.SimpleBuilder;
 import net.semanticmetadata.lire.impl.SurfDocumentBuilder;
 import net.semanticmetadata.lire.indexing.parallel.ParallelIndexer;
 import net.semanticmetadata.lire.indexing.parallel.WorkItem;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
 
 /**
  * This class allows for creating indexes in a parallel manner. The class at
@@ -170,39 +173,37 @@ public class ParallelFullSolrIndexer implements Runnable {
             System.exit(-1);
         }
         ParallelIndexer p;
+
         if (imageList != null) {
-            p = new ParallelIndexer(numThreads, indexPath, imageList) {
+            p = new ParallelIndexer(8, indexPath, imageList) {
                 @Override
                 public void addBuilders(ChainedDocumentBuilder builder) {
                     builder.addBuilder(new GenericDocumentBuilder(CEDD.class, true));
-                    builder.addBuilder(new GenericDocumentBuilder(PHOG.class, true));
-                    builder.addBuilder(new GenericDocumentBuilder(JCD.class, true));
-                    builder.addBuilder(new GenericDocumentBuilder(OpponentHistogram.class, true));
-                    builder.addBuilder(new GenericDocumentBuilder(JointHistogram.class, true));
-                    builder.addBuilder(new GenericDocumentBuilder(ColorLayout.class, true));
-                    builder.addBuilder(new GenericDocumentBuilder(EdgeHistogram.class, true));
-                    builder.addBuilder(new GenericDocumentBuilder(SimpleColorHistogram.class, true));
-                    builder.addBuilder(new GenericDocumentBuilder(AutoColorCorrelogram.class, true));
+                    builder.addBuilder(new SurfDocumentBuilder());
+                    builder.addBuilder(new SiftDocumentBuilder());
                 }
             };
 
         } else {
-            p = new ParallelIndexer(numThreads, indexPath, imageDirectory) {
+            p = new ParallelIndexer(8, indexPath, imageDirectory) {
                 @Override
                 public void addBuilders(ChainedDocumentBuilder builder) {
                     builder.addBuilder(new GenericDocumentBuilder(CEDD.class, true));
-                    builder.addBuilder(new GenericDocumentBuilder(PHOG.class, true));
-                    builder.addBuilder(new GenericDocumentBuilder(JCD.class, true));
-                    builder.addBuilder(new GenericDocumentBuilder(OpponentHistogram.class, true));
-                    builder.addBuilder(new GenericDocumentBuilder(JointHistogram.class, true));
-                    builder.addBuilder(new GenericDocumentBuilder(ColorLayout.class, true));
-                    builder.addBuilder(new GenericDocumentBuilder(EdgeHistogram.class, true));
-                    builder.addBuilder(new GenericDocumentBuilder(SimpleColorHistogram.class, true));
-                    builder.addBuilder(new GenericDocumentBuilder(AutoColorCorrelogram.class, true));
+                    builder.addBuilder(new SurfDocumentBuilder());
+                    builder.addBuilder(new SiftDocumentBuilder());
                 }
             };
         }
         p.run();
+
+        try {
+            IndexReader ir = DirectoryReader.open(FSDirectory.open(new File(indexPath)));
+            BOVWBuilder sfh = new BOVWBuilder(ir, new SurfFeature(), 1000, 50);
+            sfh.index();
+        } catch (IOException ioe) {
+            //System.err.println(ioe.getMessage());
+        }
+
     }
 
     /**
@@ -464,7 +465,7 @@ public class ParallelFullSolrIndexer implements Runnable {
                         writer.addDocument(d);
                     }
                 } catch (IOException e) {
-                     e.printStackTrace();
+                    e.printStackTrace();
                 }
 //                synchronized (images) {
 //                    // we wait for the stack to be either filled or empty & not being filled any more.

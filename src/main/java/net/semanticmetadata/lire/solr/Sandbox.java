@@ -51,6 +51,7 @@ import net.semanticmetadata.lire.imageanalysis.joint.JointHistogram;
 import net.semanticmetadata.lire.imageanalysis.spatialpyramid.SPCEDD;
 import net.semanticmetadata.lire.imageanalysis.mser.MSERFeature;
 import net.semanticmetadata.lire.impl.ChainedDocumentBuilder;
+import net.semanticmetadata.lire.impl.GenericDocumentBuilder;
 import net.semanticmetadata.lire.impl.SimpleBuilder;
 import net.semanticmetadata.lire.impl.SurfDocumentBuilder;
 import net.semanticmetadata.lire.indexing.parallel.ParallelIndexer;
@@ -65,21 +66,29 @@ public class Sandbox {
     private static File indexPath;
     private static final String queryImage = "/Users/ferdous/projects/digitalcandy/liresolr/testdata/ferrari/red/6822615599_18d9915317_b.jpg";
     static String bovw_index_path = "index";
-    int sampleToCreateCodebook = 1000;
-    int numberOfClusters = 512;
+    int sampleToCreateCodebook = -1;
+    int numberOfClusters = 10;
 
     public void createSurfIndex() throws IOException {
-        IndexReader reader = DirectoryReader.open(FSDirectory.open(indexPath));
-        ParallelIndexer pin = new ParallelIndexer(8, bovw_index_path, "testdata") {
+        ParallelIndexer pin = new ParallelIndexer(8, bovw_index_path, "./testdata") {
             @Override
             public void addBuilders(ChainedDocumentBuilder builder) {
+                builder.addBuilder(new GenericDocumentBuilder(CEDD.class, true));
                 builder.addBuilder(new SurfDocumentBuilder());
             }
         };
         pin.run();
-        System.out.println("** SIMPLE BoVW using PHOG and Random");
-        SimpleFeatureBOVWBuilder simpleBovwBuilder = new SimpleFeatureBOVWBuilder(DirectoryReader.open(FSDirectory.open(indexPath)), new CEDD(), SimpleBuilder.KeypointDetector.Random, sampleToCreateCodebook, numberOfClusters);
-        simpleBovwBuilder.index();
+        createVisualWords();
+    }
+
+    private void createVisualWords() throws IOException {
+        try {
+            IndexReader ir = DirectoryReader.open(FSDirectory.open(new File("index")));
+            BOVWBuilder sfh = new BOVWBuilder(ir, new SurfFeature(), 1000, 50);
+            sfh.index();
+        } catch (IOException ioe) {
+            System.err.println(ioe.getMessage());
+        }
     }
 
     private static ImageSearcher getSearcher(int selectedIndex, int limit) {
@@ -128,16 +137,17 @@ public class Sandbox {
     private static void searchForDocument(Document d) {
         final Document myDoc = d;
         Thread t = new Thread() {
+            @Override
             public void run() {
                 try {
-                    IndexReader reader = DirectoryReader.open(FSDirectory.open(indexPath));
-                    ImageSearcher searcher = getSearcher(99, 12);
-                    System.out.println(searcher.getClass().getName() + " " + searcher.toString());
-                    ImageSearchHits hits = searcher.search(myDoc, reader);
-                    reader.close();
-//                    hits = lsa(hits, myDoc);
-                    FileUtils.saveImageResultsToHtml("filtertest", hits, myDoc.getValues(DocumentBuilder.FIELD_NAME_IDENTIFIER)[0]);
-
+                    ImageSearchHits hits;
+                    try (IndexReader reader = DirectoryReader.open(FSDirectory.open(indexPath))) {
+                        ImageSearcher searcher = getSearcher(11, 12);
+                        System.out.println(searcher.getClass().getName() + " " + searcher.toString());
+                        hits = searcher.search(myDoc, reader);
+                        hits = lsa(hits, myDoc);
+                        FileUtils.saveImageResultsToHtml("filtertest", hits, myDoc.getValues(DocumentBuilder.FIELD_NAME_IDENTIFIER)[0]);
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -148,30 +158,21 @@ public class Sandbox {
 
     private static void searchForImage(String imagePath) throws FileNotFoundException, IOException {
         System.out.println("---< searching >-------------------------");
-        IndexReader reader = IndexReader.open(FSDirectory.open(indexPath));
-//        for (int i = 0; i < reader.numDocs(); i++) {
-//            Document doc = reader.document(i);
-//            String fileName = doc.getValues(DocumentBuilder.FIELD_NAME_IDENTIFIER)[0];
-//            System.out.println(i + ": \t" + fileName);
-//        }
-//        Document document = reader.document(139);
-//        System.out.print(document.getFields().toString());
-
-        Document document = reader.document(474);
-        reader.close();
-        searchForDocument(document);
-//        System.out.print(document.getFields().toString());
-//        String path = document.getValues(DocumentBuilder.FIELD_NAME_IDENTIFIER)[0];
-//
-//        ImageSearcher searcher = getSearcher(11, 100);
-//        ImageSearchHits hits = searcher.search(document, reader);
-//        for (int i = 0; i < hits.length(); i++) {
-//            String fileName = hits.doc(i).getValues(DocumentBuilder.FIELD_NAME_IDENTIFIER)[0];
-//            System.out.println(hits.score(i) + ": \t" + fileName);
-//        }
-////        hits = rerank(hits, document);
-////        hits = lsa(hits, document);
-//        FileUtils.saveImageResultsToHtml("filtertest", hits, path);
+        Document document = null;
+        try (IndexReader reader = IndexReader.open(FSDirectory.open(indexPath))) {
+            for (int i = 0; i < reader.numDocs(); i++) {
+                Document idoc = reader.document(i);
+                String fileName = idoc.getValues(DocumentBuilder.FIELD_NAME_IDENTIFIER)[0];
+                if(imagePath == null ? fileName == null : imagePath.equals(fileName)){
+                    document = idoc;
+                }
+                System.out.println(i + ": \t" + fileName);
+            }              
+            String path = document.getValues(DocumentBuilder.FIELD_NAME_IDENTIFIER)[0];
+            System.out.println("searching for " + path);
+            searchForDocument(document);
+        }
+        
     }
 
     private static ImageSearchHits lsa(ImageSearchHits hits, Document document) {
@@ -190,15 +191,7 @@ public class Sandbox {
     }
 
     public void findByUrl() throws IOException {
-        String path = "/Users/ferdous/projects/digitalcandy/liresolr/testdata/cars/trucks/pickup-white.jpg";
-        searchForImage(path);
-
-//        for (int i = 0; i < hits.length(); i++) {
-//            String fileName = hits.doc(i).getValues(DocumentBuilder.FIELD_NAME_IDENTIFIER)[0];
-//            System.out.println(hits.score(i) + ": \t" + fileName);
-//        }
-//        FileUtils.saveImageResultsToPng("bovw", hits, path);
-//        FileUtils.saveImageResultsToHtml("bovw", hits, path);
+        searchForImage("/Users/ferdous/projects/digitalcandy/liresolr/testdata/cars/trucks/pickup-red.jpg");
     }
 
     public Sandbox() {
@@ -208,7 +201,8 @@ public class Sandbox {
     public static void main(String[] args) {
         try {
             Sandbox sandbox = new Sandbox();
-            sandbox.createSurfIndex();
+            //sandbox.createSurfIndex();
+//            sandbox.createVisualWords();
             sandbox.findByUrl();
         } catch (IOException ex) {
             LOG.info(ex.getMessage());

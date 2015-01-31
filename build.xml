@@ -89,16 +89,14 @@
     </target>
     	
     <target name="index" depends="clean,compile">
-        <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer" fork="true" maxmemory="6g" error="indexer_error.log" output="indexer_output.log">
-            <jvmarg line="-Xmx6g -Djava.library.path=lib/opencv -server"/>
+        <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelSolrIndexer" fork="true" maxmemory="3g" error="indexer_error.log" output="indexer_output.log">
+            <jvmarg line="-Xmx3g -Djava.library.path=lib/opencv -server"/>
             <!-- adapt this argument to use your pictures -->
-            <arg line="-i ./out.txt -o ./docs.xml -n 16 -p"/>
+            <arg line="-i ./out.txt -o ./docs.xml -n 6"/>
             <!--<arg line="-d ./testdata -i ./idx-test -n 16"/>-->
             <!--
                 Usage:
-
                 $> ParallelSolrIndexer -i <index> <-d <image-directory> | -l <image-list>> [-n <number of threads>]
-
                 index             ... The directory of the index. Will be appended or created if not existing.
                 images-directory  ... The directory the images are found in. It's traversed recursively.
                 image-list        ... A list of images in a file, one per line. Use instead of images-directory.
@@ -109,16 +107,13 @@
     
     <target name="lindex" depends="compile">
         <!-- Note: This needs to be forked, otherwise multi threading won't work and the heap space will be exceeded soon. -->
-        <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelFullSolrIndexer" fork="true" maxmemory="2048M" error="indexer_error.log" output="indexer_output.log">
-            <jvmarg line="-Xmx2048M -Djava.library.path=lib/opencv"/>
+        <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.ParallelFullSolrIndexer" fork="true" maxmemory="4000M" error="indexer_error.log" output="indexer_output.log">
+            <jvmarg line="-Xmx4000M -Djava.library.path=lib/opencv"/>
             <!-- adapt this argument to use your pictures -->
-            <arg line="-d ./testdata/cars -i ./idx-cars -n 16"/>
-            <!--<arg line="-l ./out.txt -i ./idx-cars -n 16"/>-->
+            <arg line="-d ./testdata -i ./idx-cars -n 6"/>
             <!--
                 Usage:
-
                 $> ParallelFullSolrIndexer -i <index> <-d <image-directory> | -l <image-list>> [-n <number of threads>]
-
                 index             ... The directory of the index. Will be appended or created if not existing.
                 images-directory  ... The directory the images are found in. It's traversed recursively.
                 image-list        ... A list of images in a file, one per line. Use instead of images-directory.
@@ -129,16 +124,15 @@
     
     <target name="search" depends="compile">
         <!-- Note: This needs to be forked, otherwise multi threading won't work and the heap space will be exceeded soon. -->
-        <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.Sandbox" fork="true" maxmemory="2048M" error="indexer_error.log" output="indexer_output.log">
+        <java classpathref="classpath.path" classname="net.semanticmetadata.lire.solr.Sandbox" fork="true" maxmemory="4048M" error="indexer_error.log" output="indexer_output.log">
             <!--<jvmarg line="-Xmx4048m -server -Djava.awt.headless=true -Djava.library.path=lib/opencv"/>-->
-            <jvmarg line="-Xmx2048M -Djava.library.path=lib/opencv"/>
+            <jvmarg line="-Xmx4048M -Djava.library.path=lib/opencv"/>
             <!-- adapt this argument to use your pictures -->
             <arg line="-d ./testdata -i ./idx-cars -n 16"/>
             <!--<arg line="-l ./out.txt -i ./idx-cars -n 16"/>-->
         </java>
     </target>
-        
-        
+                
     <target name="war" depends="dist">
         <war destfile="${dist}/${name}.war" webxml="${web}/WEB-INF/web.xml" update="true" manifest="default.mf" basedir="${build}">
             <exclude name="**/apache/**" />
@@ -154,7 +148,7 @@
         </java>
     </presetdef>
     
-    <target name="deploy_to_glassfish4">
+    <target name="deploy_to_glassfish4" depends="war">
         <asadmin failonerror="true">
             <arg value="deploy" />
             <arg value="--force=true" />

@@ -66,7 +66,7 @@ function printResults(docs) {
         } else if (i % 4 == 3) {
             col = "ui-block-d";
         }
-        recent = $("<div class=\"" + col + "\"><div style=\"height:170px\"><img style=\"max-width:160px;max-height:160px;display: block;margin-left: auto;margin-right: auto;\" src=\"" + imageUrl + "\" /></div>"
+        recent = $("<div class=\"" + col + "\"><div style=\"height:170px\"><img style=\"max-width:160px;max-height:160px;display: block;margin-left: auto;margin-right: auto;\" src=\"" + imageUrl.replace('#', '%23') + "\" /></div>"
                 + "score=" + (docs[i].d || '0.00')
                 + getCBIRLinks(myID)
                 + "</div>");
@@ -99,7 +99,6 @@ function tagSearchDo() {
         }
 
     }
-    // http://localhost:8983/solr/media_shard1_replica1/select?q=tags%3Aaustria%0A&wt=json&indent=true
     console.log(queryString);
 
     $.ajax(serverUrl, {
@@ -162,7 +161,7 @@ function tagSearchDo() {
 
 $('#tagsearch').keypress(function (e) {
     if (e.which == 13 && $('#tagsearch').val().length >= 1) {
-        tagSearchDo(); // do tag based search ...
+        tagSearchDo();
     }
 });
 
@@ -191,10 +190,7 @@ function extract(field, url) {
         'jsonp': 'json.wrf',
         'wt': 'json',
         success: function (myResult) {
-
-//    $.getJSON(serverUrl, function (myResult) {
             console.log(myResult);
-
             if (!myResult.Error) {
                 $('#sorthist').val(encodeURIComponent(field + ",\"" + myResult.histogram + "\""));
                 tagSearchDo(); // do tag search ...
@@ -292,9 +288,7 @@ function search(idString, field) {
     $(".ui-grid-c").remove();
     $("#perf").html("Please stand by .... <img src=\"img/loader-light.gif\"/>");
     $(".title").html("Results for query id \"" + idString + "\"");
-
     // console.log($("#slider-1").val());
-
     // get all the new data from the server ...
     serverUrl = serverUrlPrefix + "?start=0&rows=30&id=" + idString + "&field=" + field;
     if ($("#slider-1").val())
